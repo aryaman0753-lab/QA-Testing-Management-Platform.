@@ -2,13 +2,14 @@ import enum
 import uuid
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import Enum, ForeignKey, String, Text
+from sqlalchemy import Enum, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 from app.database.models.guid import GUID
 
 if TYPE_CHECKING:
+    from app.database.models.bug import Bug
     from app.database.models.user import User
     from app.database.models.project_member import ProjectMember
 
@@ -31,11 +32,13 @@ class Project(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         index=True,
     )
     created_by: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("users.id"), nullable=False)
+    next_bug_number: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     creator: Mapped["User"] = relationship(back_populates="created_projects")
     members: Mapped[List["ProjectMember"]] = relationship(
         back_populates="project", cascade="all, delete-orphan"
     )
+    bugs: Mapped[List["Bug"]] = relationship(back_populates="project", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<Project id={self.id} key={self.key!r} status={self.status}>"

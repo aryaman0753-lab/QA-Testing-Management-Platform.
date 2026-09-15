@@ -1,7 +1,7 @@
 # QAHub Architecture
 
 This document explains *why* the code is organized the way it is, specifically
-so that Phase 2+ modules (bugs, API testing, load testing, test cases, reports,
+so that later modules (API testing, load testing, test cases, reports,
 notifications) can be added without modifying auth, users, projects, or the
 database/session plumbing.
 
@@ -42,7 +42,10 @@ unit-tested (or reused by a future CLI/worker) without going through FastAPI.
 ## Data model
 
 ```
-User ──< ProjectMember >── Project
+User --< ProjectMember >-- Project --< Bug
+                                      |--< BugComment
+                                      |--< BugAttachment
+                                      `--< BugHistory
 ```
 
 `ProjectMember` is a real entity (with its own `id`, not just a composite key)
@@ -84,9 +87,22 @@ dependencies, ready for Phase 2 to layer bug/test permissions on top of:
    `OWNER` can manage the project and its membership; `MEMBER`/`VIEWER` can
    only read. A system `ADMIN` bypasses project-role checks entirely.
 
-A future bug-tracking module would likely add a third, orthogonal check
-("assignee can transition their own bug") without needing to change either of
-the above.
+The bug module adds a third, orthogonal check: developers only see and advance
+bugs assigned to them. QA engineers follow a transition map, while admins can
+recover from any state. All checks live in `bugs/service.py` rather than relying
+on the frontend.
+
+## Bug numbering and future test results
+
+Each project owns a `next_bug_number` counter. Bug creation locks that project
+row, increments it, and stores a unique `(project_id, bug_number)` pair. The
+display key combines the project key with the number, preventing duplicates
+during concurrent reporting.
+
+Future `TestResult` records can link to bugs through a nullable foreign key or a
+many-to-many association table. Test execution is intentionally absent from
+Phase 2; stable UUID bug identity keeps that later addition independent of the
+human-readable key.
 
 ## Frontend structure
 

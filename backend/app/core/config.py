@@ -8,6 +8,7 @@ inventing their own env-loading logic.
 from functools import lru_cache
 from typing import List
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -33,6 +34,19 @@ class Settings(BaseSettings):
 
     # CORS - comma separated list of allowed origins
     CORS_ORIGINS: str = "http://localhost:5173,http://localhost:3000"
+
+    # Bug evidence storage
+    ATTACHMENT_STORAGE_DIR: str = "./storage/attachments"
+    MAX_ATTACHMENT_SIZE_MB: int = 10
+
+    @field_validator("DEBUG", mode="before")
+    @classmethod
+    def normalize_debug(cls, value: object) -> object:
+        # Some developer tools set a process-wide DEBUG=release/debug namespace.
+        # Treat those unrelated values as false instead of preventing startup.
+        if isinstance(value, str) and value.lower() not in {"1", "0", "true", "false", "yes", "no", "on", "off"}:
+            return False
+        return value
 
     @property
     def cors_origins_list(self) -> List[str]:

@@ -40,8 +40,12 @@ services:
       ENVIRONMENT: ${ENVIRONMENT:-development}
       DEBUG: ${DEBUG:-false}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173,http://localhost:3000}
+      ATTACHMENT_STORAGE_DIR: ${ATTACHMENT_STORAGE_DIR:-/app/storage/attachments}
+      MAX_ATTACHMENT_SIZE_MB: ${MAX_ATTACHMENT_SIZE_MB:-10}
     ports:
       - "8000:8000"
+    volumes:
+      - qahub_attachment_data:/app/storage/attachments
     depends_on:
       db:
         condition: service_healthy
@@ -66,3 +70,4 @@ services:
 
 volumes:
   qahub_postgres_data:
+  qahub_attachment_data:

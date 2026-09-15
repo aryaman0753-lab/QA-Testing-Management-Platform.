@@ -10,6 +10,7 @@ import os
 
 os.environ["DATABASE_URL"] = "sqlite://"
 os.environ["JWT_SECRET_KEY"] = "test-secret-key"
+os.environ["DEBUG"] = "false"
 
 import pytest
 from fastapi.testclient import TestClient

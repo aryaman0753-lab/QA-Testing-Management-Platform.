@@ -5,6 +5,9 @@ from app.database.models.base import Base  # noqa: F401
 from app.database.models.user import User, UserRole  # noqa: F401
 from app.database.models.project import Project, ProjectStatus  # noqa: F401
 from app.database.models.project_member import ProjectMember, ProjectRole  # noqa: F401
+from app.database.models.bug import (  # noqa: F401
+    Bug, BugAttachment, BugComment, BugHistory, BugPriority, BugSeverity, BugStatus,
+)
 
 __all__ = [
     "Base",
@@ -14,4 +17,5 @@ __all__ = [
     "ProjectStatus",
     "ProjectMember",
     "ProjectRole",
+    "Bug", "BugAttachment", "BugComment", "BugHistory", "BugPriority", "BugSeverity", "BugStatus",
 ]

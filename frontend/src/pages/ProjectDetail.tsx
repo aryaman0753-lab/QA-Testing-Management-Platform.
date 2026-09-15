@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { AppLayout } from "../components/layout/AppLayout";
 import { Button } from "../components/ui/Button";
 import { LoadingSpinner } from "../components/ui/LoadingSpinner";
@@ -91,6 +91,7 @@ export function ProjectDetail() {
         </div>
         {isOwnerOrAdmin && (
           <div className="button-row">
+            <Link className="btn btn-primary link-button" to={`/projects/${project.id}/bugs`}>View Bugs</Link>
             <Button variant="secondary" onClick={() => setIsEditOpen(true)}>
               Edit
             </Button>
@@ -102,6 +103,12 @@ export function ProjectDetail() {
           </div>
         )}
       </div>
+
+      {!isOwnerOrAdmin && (
+        <div className="button-row project-bug-link">
+          <Link className="btn btn-primary link-button" to={`/projects/${project.id}/bugs`}>View Bugs</Link>
+        </div>
+      )}
 
       <section className="panel">
         <h2>Description</h2>
@@ -132,7 +139,7 @@ export function ProjectDetail() {
                   <td>{member.user.full_name}</td>
                   <td>{member.user.email}</td>
                   <td>{member.project_role}</td>
-                  {isOwnerOrAdmin && (
+        {isOwnerOrAdmin && (
                     <td>
                       <button className="link-danger" onClick={() => handleRemoveMember(member.user_id)}>
                         Remove
@@ -260,7 +267,8 @@ function AddMemberModal({
           <Button type="submit" isLoading={isSubmitting} disabled={availableUsers.length === 0}>
             Add Member
           </Button>
-        </div>
+      </div>
+
       </form>
     </Modal>
   );

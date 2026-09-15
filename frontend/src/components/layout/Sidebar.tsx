@@ -3,7 +3,7 @@ import { NavLink } from "react-router-dom";
 const NAV_ITEMS = [
   { label: "Dashboard", to: "/dashboard", disabled: false },
   { label: "Projects", to: "/projects", disabled: false },
-  { label: "Bugs", to: "#", disabled: true },
+  { label: "Bugs", to: "/projects", disabled: false },
   { label: "API Tests", to: "#", disabled: true },
   { label: "Load Tests", to: "#", disabled: true },
   { label: "Reports", to: "#", disabled: true },

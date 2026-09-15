@@ -10,6 +10,9 @@ import { Projects } from "./pages/Projects";
 import { ProjectDetail } from "./pages/ProjectDetail";
 import { Profile } from "./pages/Profile";
 import { NotFound } from "./pages/NotFound";
+import { ProjectBugs } from "./pages/ProjectBugs";
+import { CreateBug } from "./pages/CreateBug";
+import { BugDetails } from "./pages/BugDetails";
 
 function RedirectIfAuthenticated({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -55,6 +58,18 @@ export default function App() {
                 <Projects />
               </ProtectedRoute>
             }
+          />
+          <Route
+            path="/projects/:projectId/bugs/new"
+            element={<ProtectedRoute><CreateBug /></ProtectedRoute>}
+          />
+          <Route
+            path="/projects/:projectId/bugs/:bugId"
+            element={<ProtectedRoute><BugDetails /></ProtectedRoute>}
+          />
+          <Route
+            path="/projects/:projectId/bugs"
+            element={<ProtectedRoute><ProjectBugs /></ProtectedRoute>}
           />
           <Route
             path="/projects/:id"

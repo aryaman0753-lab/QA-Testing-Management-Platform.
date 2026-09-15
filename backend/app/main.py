@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.auth.router import router as auth_router
+from app.bugs.router import attachment_router, bug_router, project_router as project_bugs_router
 from app.common.exceptions import AppError
 from app.core.config import get_settings
 from app.core.logging import configure_logging, get_logger
@@ -29,8 +30,8 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title=settings.APP_NAME,
-    description="QAHub API - Phase 1 foundation (auth, users, projects, project membership).",
-    version="0.1.0",
+    description="QAHub API - authentication, projects, and complete bug tracking.",
+    version="0.2.0",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
@@ -66,3 +67,6 @@ app.include_router(auth_router, prefix=settings.API_V1_PREFIX)
 app.include_router(users_router, prefix=settings.API_V1_PREFIX)
 app.include_router(projects_router, prefix=settings.API_V1_PREFIX)
 app.include_router(project_members_router, prefix=settings.API_V1_PREFIX)
+app.include_router(project_bugs_router, prefix=settings.API_V1_PREFIX)
+app.include_router(bug_router, prefix=settings.API_V1_PREFIX)
+app.include_router(attachment_router, prefix=settings.API_V1_PREFIX)
