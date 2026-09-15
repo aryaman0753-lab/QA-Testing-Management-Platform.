@@ -1,0 +1,17 @@
+"""Import every model here so Alembic's autogenerate and Base.metadata.create_all
+(used only by tests) can discover them from a single import.
+"""
+from app.database.models.base import Base  # noqa: F401
+from app.database.models.user import User, UserRole  # noqa: F401
+from app.database.models.project import Project, ProjectStatus  # noqa: F401
+from app.database.models.project_member import ProjectMember, ProjectRole  # noqa: F401
+
+__all__ = [
+    "Base",
+    "User",
+    "UserRole",
+    "Project",
+    "ProjectStatus",
+    "ProjectMember",
+    "ProjectRole",
+]
