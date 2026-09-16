@@ -10,6 +10,7 @@ from app.database.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
 from app.database.models.guid import GUID
 
 if TYPE_CHECKING:
+    from app.database.models.api_testing import ApiTestResult
     from app.database.models.project import Project
     from app.database.models.user import User
 
@@ -82,6 +83,9 @@ class Bug(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False, index=True)
     archived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     archived_by: Mapped[uuid.UUID | None] = mapped_column(GUID(), ForeignKey("users.id"))
+    discovered_from_test_result_id: Mapped[uuid.UUID | None] = mapped_column(
+        GUID(), ForeignKey("api_test_results.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     project: Mapped["Project"] = relationship(back_populates="bugs")
     reporter: Mapped["User"] = relationship(foreign_keys=[reported_by])
@@ -89,6 +93,7 @@ class Bug(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     comments: Mapped[List["BugComment"]] = relationship(back_populates="bug", cascade="all, delete-orphan")
     history: Mapped[List["BugHistory"]] = relationship(back_populates="bug", cascade="all, delete-orphan")
     attachments: Mapped[List["BugAttachment"]] = relationship(back_populates="bug", cascade="all, delete-orphan")
+    discovered_from_test_result: Mapped["ApiTestResult | None"] = relationship(foreign_keys=[discovered_from_test_result_id])
 
     @property
     def bug_key(self) -> str:

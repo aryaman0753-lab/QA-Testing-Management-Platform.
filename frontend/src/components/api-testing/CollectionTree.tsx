@@ -1,0 +1,7 @@
+import type { ApiCollection } from "../../types/apiTesting";
+import { ExecutionBadge } from "./ResponseViewer";
+import type { ExecutionStatus } from "../../types/apiTesting";
+
+export function CollectionTree({ collections, selectedRequestId, running, onRequest, onNewCollection, onNewRequest, onRun }: { collections: ApiCollection[]; selectedRequestId?: string; running?: { id: string; status: ExecutionStatus } | null; onRequest: (collectionId: string, requestId: string) => void; onNewCollection: () => void; onNewRequest: (collectionId: string) => void; onRun: (collectionId: string) => void }) {
+  return <aside className="collection-tree"><div className="collection-tree-header"><strong>Collections</strong><button onClick={onNewCollection}>+</button></div>{collections.length === 0 ? <p className="muted">No collections yet.</p> : collections.map((collection) => <div className="collection-node" key={collection.id}><div><strong>{collection.name}</strong><span><button title="Run collection" onClick={() => onRun(collection.id)}>▶</button><button title="New request" onClick={() => onNewRequest(collection.id)}>+</button></span></div>{collection.requests?.map((request) => <button className={`request-node${selectedRequestId === request.id ? " active" : ""}`} onClick={() => onRequest(collection.id, request.id)} key={request.id}><span className={`method-text method-${request.method.toLowerCase()}`}>{request.method}</span>{request.name}{running?.id === request.id && <ExecutionBadge status={running.status} />}</button>)}</div>)}</aside>;
+}

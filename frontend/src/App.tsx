@@ -13,6 +13,9 @@ import { NotFound } from "./pages/NotFound";
 import { ProjectBugs } from "./pages/ProjectBugs";
 import { CreateBug } from "./pages/CreateBug";
 import { BugDetails } from "./pages/BugDetails";
+import { ApiTesting } from "./pages/ApiTesting";
+import { ApiRuns } from "./pages/ApiRuns";
+import { ApiRunDetails } from "./pages/ApiRunDetails";
 
 function RedirectIfAuthenticated({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -71,6 +74,11 @@ export default function App() {
             path="/projects/:projectId/bugs"
             element={<ProtectedRoute><ProjectBugs /></ProtectedRoute>}
           />
+          <Route path="/projects/:projectId/api-testing" element={<ProtectedRoute><ApiTesting /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/api-testing/collections/:collectionId" element={<ProtectedRoute><ApiTesting /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/api-testing/requests/:requestId" element={<ProtectedRoute><ApiTesting /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/api-testing/runs" element={<ProtectedRoute><ApiRuns /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/api-testing/runs/:runId" element={<ProtectedRoute><ApiRunDetails /></ProtectedRoute>} />
           <Route
             path="/projects/:id"
             element={

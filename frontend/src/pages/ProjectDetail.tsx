@@ -92,6 +92,7 @@ export function ProjectDetail() {
         {isOwnerOrAdmin && (
           <div className="button-row">
             <Link className="btn btn-primary link-button" to={`/projects/${project.id}/bugs`}>View Bugs</Link>
+            <Link className="btn btn-secondary link-button" to={`/projects/${project.id}/api-testing`}>API Testing</Link>
             <Button variant="secondary" onClick={() => setIsEditOpen(true)}>
               Edit
             </Button>
@@ -107,6 +108,7 @@ export function ProjectDetail() {
       {!isOwnerOrAdmin && (
         <div className="button-row project-bug-link">
           <Link className="btn btn-primary link-button" to={`/projects/${project.id}/bugs`}>View Bugs</Link>
+          <Link className="btn btn-secondary link-button" to={`/projects/${project.id}/api-testing`}>API Testing</Link>
         </div>
       )}
 

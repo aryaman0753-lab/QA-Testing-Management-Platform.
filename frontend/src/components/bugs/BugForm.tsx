@@ -4,9 +4,9 @@ import { Button } from "../ui/Button";
 
 const EMPTY: BugPayload = { title: "", description: "", steps_to_reproduce: [], severity: "MEDIUM", priority: "MEDIUM" };
 
-export function BugForm({ members, initial, submitLabel = "Create Bug", onSubmit, onCancel, limitedFields = false }: {
+export function BugForm({ members, initial, submitLabel = "Create Bug", onSubmit, onCancel, limitedFields = false, isEdit = false }: {
   members: ProjectMember[]; initial?: BugPayload; submitLabel?: string;
-  onSubmit: (payload: BugPayload, files: File[]) => Promise<void>; onCancel: () => void; limitedFields?: boolean;
+  onSubmit: (payload: BugPayload, files: File[]) => Promise<void>; onCancel: () => void; limitedFields?: boolean; isEdit?: boolean;
 }) {
   const [form, setForm] = useState<BugPayload>(initial ?? EMPTY);
   const [steps, setSteps] = useState((initial?.steps_to_reproduce ?? []).join("\n"));
@@ -37,8 +37,8 @@ export function BugForm({ members, initial, submitLabel = "Create Bug", onSubmit
         <label className="field"><span>Browser</span><input value={form.browser ?? ""} onChange={(e) => set("browser", e.target.value)} placeholder="Chrome" /></label>
         <label className="field"><span>Operating System</span><input value={form.operating_system ?? ""} onChange={(e) => set("operating_system", e.target.value)} placeholder="Windows 11" /></label>
         <label className="field"><span>Device</span><input value={form.device ?? ""} onChange={(e) => set("device", e.target.value)} placeholder="Desktop" /></label>
-        {!initial && <label className="field"><span>Assignee</span><select value={form.assigned_to ?? ""} onChange={(e) => set("assigned_to", e.target.value || null)}><option value="">Unassigned</option>{members.map((m) => <option key={m.user_id} value={m.user_id}>{m.user.full_name}</option>)}</select></label>}
-        {!initial && <label className="field"><span>Attachments</span><input type="file" multiple accept="image/png,image/jpeg,image/gif,image/webp,text/plain,video/mp4,video/webm,.log" onChange={(e) => setFiles(Array.from(e.target.files ?? []))} /><small>Images, text/log, MP4 or WebM; max 10 MB each.</small></label>}
+        {!isEdit && <label className="field"><span>Assignee</span><select value={form.assigned_to ?? ""} onChange={(e) => set("assigned_to", e.target.value || null)}><option value="">Unassigned</option>{members.map((m) => <option key={m.user_id} value={m.user_id}>{m.user.full_name}</option>)}</select></label>}
+        {!isEdit && <label className="field"><span>Attachments</span><input type="file" multiple accept="image/png,image/jpeg,image/gif,image/webp,text/plain,video/mp4,video/webm,.log" onChange={(e) => setFiles(Array.from(e.target.files ?? []))} /><small>Images, text/log, MP4 or WebM; max 10 MB each.</small></label>}
       </div>
       <div className="modal-actions"><Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button><Button type="submit" isLoading={saving}>{submitLabel}</Button></div>
     </form>

@@ -1,0 +1,25 @@
+import { apiClient } from "./client";
+import type { BugDetail, BugPayload } from "../types";
+import type { ApiAnalytics, ApiCollection, ApiEnvironment, ApiRequest, ApiRequestPayload, ApiRun, HealthCheckResult, PaginatedRuns } from "../types/apiTesting";
+
+export const listApiCollections = (projectId: string) => apiClient.get<ApiCollection[]>(`/projects/${projectId}/api/collections`);
+export const getApiCollection = (id: string) => apiClient.get<ApiCollection>(`/api/collections/${id}`);
+export const createApiCollection = (projectId: string, payload: { name: string; description?: string }) => apiClient.post<ApiCollection>(`/projects/${projectId}/api/collections`, payload);
+export const updateApiCollection = (id: string, payload: { name: string; description?: string }) => apiClient.put<ApiCollection>(`/api/collections/${id}`, payload);
+export const deleteApiCollection = (id: string) => apiClient.delete(`/api/collections/${id}`);
+export const createApiRequest = (collectionId: string, payload: ApiRequestPayload) => apiClient.post<ApiRequest>(`/api/collections/${collectionId}/requests`, payload);
+export const getApiRequest = (id: string) => apiClient.get<ApiRequest>(`/api/requests/${id}`);
+export const updateApiRequest = (id: string, payload: ApiRequestPayload) => apiClient.put<ApiRequest>(`/api/requests/${id}`, payload);
+export const deleteApiRequest = (id: string) => apiClient.delete(`/api/requests/${id}`);
+export const listApiEnvironments = (projectId: string) => apiClient.get<ApiEnvironment[]>(`/projects/${projectId}/api/environments`);
+export const createApiEnvironment = (projectId: string, payload: { name: string; variables: ApiEnvironment["variables"] }) => apiClient.post<ApiEnvironment>(`/projects/${projectId}/api/environments`, payload);
+export const updateApiEnvironment = (id: string, payload: { name: string; variables: ApiEnvironment["variables"] }) => apiClient.put<ApiEnvironment>(`/api/environments/${id}`, payload);
+export const deleteApiEnvironment = (id: string) => apiClient.delete(`/api/environments/${id}`);
+export const executeApiRequest = (id: string, environmentId?: string) => apiClient.post<ApiRun>(`/api/requests/${id}/execute`, { environment_id: environmentId || null });
+export const executeApiCollection = (id: string, environmentId?: string, requestIds?: string[]) => apiClient.post<ApiRun>(`/api/collections/${id}/execute`, { environment_id: environmentId || null, request_ids: requestIds });
+export const listApiRuns = (projectId: string, page = 1) => apiClient.get<PaginatedRuns>("/api/runs", { params: { project_id: projectId, page, page_size: 20 } });
+export const getApiRun = (id: string) => apiClient.get<ApiRun>(`/api/runs/${id}`);
+export const getApiAnalytics = (projectId: string) => apiClient.get<ApiAnalytics>(`/projects/${projectId}/api/analytics`);
+export const runHealthCheck = (projectId: string, payload: { url: string; expected_status: number; max_response_time_ms?: number }) => apiClient.post<HealthCheckResult>(`/projects/${projectId}/api/health-check`, payload);
+export const getBugSuggestion = (resultId: string) => apiClient.get<BugPayload>(`/api/results/${resultId}/bug-suggestion`);
+export const createBugFromResult = (resultId: string, payload: BugPayload) => apiClient.post<BugDetail>(`/api/results/${resultId}/bugs`, payload);

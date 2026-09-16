@@ -13,6 +13,11 @@ from app.database.models.project import Project
 from app.database.models.project_member import ProjectMember, ProjectRole
 from app.database.models.user import User, UserRole
 from app.database.models.bug import Bug, BugPriority, BugSeverity, BugStatus
+from app.database.models.api_testing import (
+    ApiAssertion, ApiCollection, ApiEnvironment, ApiRequest, AssertionOperator,
+    AssertionType, AuthenticationType, BodyType, HttpMethod,
+)
+from app.api_testing.secrets import encrypt
 
 configure_logging()
 logger = get_logger(__name__)
@@ -113,6 +118,37 @@ def seed() -> None:
                 ))
             ecom.next_bug_number = len(samples)
             logger.info("Seeded ECOM project with %s sample bugs", len(samples))
+
+        api_collection = db.query(ApiCollection).filter(ApiCollection.project_id == ecom.id, ApiCollection.name == "ECOM API").first()
+        if api_collection is None:
+            environment = ApiEnvironment(
+                project_id=ecom.id, name="QA", created_by=admin.id,
+                variables={
+                    "base_url": {"value": "https://api.example.test", "is_secret": False},
+                    "user_id": {"value": "1", "is_secret": False},
+                    "access_token": {"value": encrypt("replace-me"), "is_secret": True},
+                },
+            )
+            api_collection = ApiCollection(project_id=ecom.id, name="ECOM API", description="Editable examples; configure a permitted public test host before execution.", created_by=admin.id)
+            db.add_all([environment, api_collection]); db.flush()
+            examples = [
+                ("Get Users", HttpMethod.GET, "{{base_url}}/users", BodyType.NONE, None),
+                ("Get User", HttpMethod.GET, "{{base_url}}/users/{{user_id}}", BodyType.NONE, None),
+                ("Create User", HttpMethod.POST, "{{base_url}}/users", BodyType.JSON, '{"name":"QA Test User"}'),
+                ("Update User", HttpMethod.PUT, "{{base_url}}/users/{{user_id}}", BodyType.JSON, '{"name":"Updated QA User"}'),
+                ("Delete User", HttpMethod.DELETE, "{{base_url}}/users/{{user_id}}", BodyType.NONE, None),
+            ]
+            for position, (name, method, url, body_type, body) in enumerate(examples):
+                api_request = ApiRequest(
+                    project_id=ecom.id, collection_id=api_collection.id, name=name, method=method,
+                    url=url, headers=[{"key": "Accept", "value": "application/json", "enabled": True}],
+                    query_parameters=[], body=body, body_type=body_type,
+                    authentication_type=AuthenticationType.NONE, authentication_config={},
+                    position=position, created_by=admin.id,
+                )
+                db.add(api_request); db.flush()
+                db.add(ApiAssertion(request_id=api_request.id, assertion_type=AssertionType.STATUS_CODE, operator=AssertionOperator.LESS_THAN, expected_value="400", position=0))
+            logger.info("Seeded ECOM API collection and QA environment")
 
         db.commit()
         print("Seed complete. Development accounts (password for all: 'Password123!'):")

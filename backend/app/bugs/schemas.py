@@ -148,6 +148,15 @@ class BugListItem(BaseModel):
     updated_at: datetime
 
 
+class ApiTestSourceSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    test_run_id: uuid.UUID
+    request_name: str
+    method: str
+    resolved_url: str
+
+
 class BugDetail(BugListItem):
     description: str
     steps_to_reproduce: list[str]
@@ -162,6 +171,8 @@ class BugDetail(BugListItem):
     comments: list[BugCommentOut]
     attachments: list[BugAttachmentOut]
     history: list[BugHistoryOut]
+    discovered_from_test_result_id: uuid.UUID | None
+    discovered_from_test_result: ApiTestSourceSummary | None
 
 
 class PaginatedBugs(BaseModel):

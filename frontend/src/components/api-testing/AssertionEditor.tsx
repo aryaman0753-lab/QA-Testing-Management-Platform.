@@ -1,0 +1,9 @@
+import type { ApiAssertion, AssertionOperator, AssertionType } from "../../types/apiTesting";
+
+const TYPES: AssertionType[] = ["STATUS_CODE", "RESPONSE_TIME", "BODY_CONTAINS", "JSON_PATH", "HEADER_EXISTS", "HEADER_EQUALS", "JSON_VALUE_EQUALS", "JSON_VALUE_CONTAINS"];
+const OPERATORS: AssertionOperator[] = ["EQUALS", "NOT_EQUALS", "LESS_THAN", "GREATER_THAN", "CONTAINS", "NOT_CONTAINS", "EXISTS", "NOT_EXISTS"];
+
+export function AssertionEditor({ assertions, onChange }: { assertions: ApiAssertion[]; onChange: (items: ApiAssertion[]) => void }) {
+  const update = (index: number, patch: Partial<ApiAssertion>) => onChange(assertions.map((item, i) => i === index ? { ...item, ...patch } : item));
+  return <div>{assertions.map((item, index) => <div className="assertion-row" key={index}><input type="checkbox" checked={item.enabled} onChange={(e) => update(index, { enabled: e.target.checked })} /><select aria-label={`Assertion type ${index + 1}`} value={item.assertion_type} onChange={(e) => update(index, { assertion_type: e.target.value as AssertionType })}>{TYPES.map((value) => <option key={value}>{value}</option>)}</select><select value={item.operator} onChange={(e) => update(index, { operator: e.target.value as AssertionOperator })}>{OPERATORS.map((value) => <option key={value}>{value}</option>)}</select><input placeholder="JSON path / header" value={item.target ?? ""} onChange={(e) => update(index, { target: e.target.value })} /><input placeholder="Expected value" value={item.expected_value ?? ""} onChange={(e) => update(index, { expected_value: e.target.value })} /><button className="icon-button" onClick={() => onChange(assertions.filter((_, i) => i !== index))}>×</button></div>)}<button className="inline-link" onClick={() => onChange([...assertions, { assertion_type: "STATUS_CODE", operator: "EQUALS", expected_value: "200", enabled: true }])}>+ Add assertion</button></div>;
+}

@@ -1,9 +1,8 @@
 # QAHub Architecture
 
-This document explains *why* the code is organized the way it is, specifically
-so that later modules (API testing, load testing, test cases, reports,
-notifications) can be added without modifying auth, users, projects, or the
-database/session plumbing.
+This document explains how bug tracking and secure functional API testing are
+added without duplicating auth, users, projects, or database/session plumbing,
+and how the same boundaries prepare QAHub for later load testing.
 
 ## Layering inside a module
 
@@ -46,6 +45,11 @@ User --< ProjectMember >-- Project --< Bug
                                       |--< BugComment
                                       |--< BugAttachment
                                       `--< BugHistory
+                                  |--< ApiCollection --< ApiRequest
+                                  |                       |--< ApiAssertion
+                                  |                       `--< ApiExtractor
+                                  |--< ApiEnvironment
+                                  `--< ApiTestRun --< ApiTestResult --< Bug (optional source)
 ```
 
 `ProjectMember` is a real entity (with its own `id`, not just a composite key)
@@ -104,6 +108,40 @@ many-to-many association table. Test execution is intentionally absent from
 Phase 2; stable UUID bug identity keeps that later addition independent of the
 human-readable key.
 
+## API execution boundaries
+
+`app/api_testing/` deliberately separates persistence/orchestration from the
+network and evaluation primitives:
+
+- `router.py` exposes authenticated schemas and applies execution rate limits.
+- `service.py` enforces project/role policy, allocates run numbers, sequences
+  collections, persists results, records audits, computes analytics, and hands
+  failed results to the bug service.
+- `engine.py` resolves a single request and executes it with bounded HTTPX
+  streaming. It has injected client and URL-validator boundaries for tests and
+  future worker reuse.
+- `outbound_security.py` validates schemes/hostnames and every DNS answer, pins
+  a permitted IP, preserves Host/SNI, checks the connected peer when available,
+  and repeats validation after every redirect.
+- `variables.py`, `assertions.py`, and `jsonpath.py` are deterministic, network-
+  free components. Variable precedence is runtime > extracted > environment.
+- `secrets.py` encrypts authentication, sensitive headers, and secret
+  environment values. Read schemas expose masked placeholders and updates
+  preserve encrypted values when those placeholders are submitted unchanged.
+
+This creates an explicit pipeline:
+
+```text
+definition -> resolution -> validated outbound request -> response snapshot
+           -> assertions/extractors -> persisted run/result -> optional bug
+```
+
+Definitions are never overwritten with resolved secrets, and result URLs omit
+query strings. Collection chaining passes extracted values in memory only to
+later requests in that run. Phase 3 runs collections sequentially; Phase 4 can
+invoke the same definition/resolution layer from rate-controlled Redis/Locust
+workers without reusing the interactive FastAPI worker as a load generator.
+
 ## Frontend structure
 
 ```
@@ -119,10 +157,11 @@ components/
 pages/      One file per route, composed from api/ + components/.
 ```
 
-The sidebar's "Coming Soon" items (Bugs, API Tests, Load Tests, Reports,
-Settings) are rendered from a static list in `Sidebar.tsx` — adding a real
-route for one later means changing that list and adding a page, not
-restructuring the shell.
+The API Testing navigation resolves the active project from the current route.
+The workspace is composed from focused editors (auth, body, key/value,
+assertions, extractors, environments, response viewer, and collection tree),
+with separate pages for the builder, run history, and run details. Load Tests
+remains a disabled placeholder.
 
 ### Token storage
 

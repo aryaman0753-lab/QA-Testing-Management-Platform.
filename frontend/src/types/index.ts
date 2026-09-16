@@ -122,6 +122,8 @@ export interface BugDetail extends BugListItem {
   comments: BugComment[];
   attachments: BugAttachment[];
   history: BugHistoryEntry[];
+  discovered_from_test_result_id: string | null;
+  discovered_from_test_result: { id: string; test_run_id: string; request_name: string; method: string; resolved_url: string } | null;
 }
 
 export interface BugPayload {

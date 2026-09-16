@@ -39,6 +39,17 @@ class Settings(BaseSettings):
     ATTACHMENT_STORAGE_DIR: str = "./storage/attachments"
     MAX_ATTACHMENT_SIZE_MB: int = 10
 
+    # Functional API execution (Phase 3)
+    API_REQUEST_TIMEOUT_SECONDS: float = 30.0
+    API_MAX_TIMEOUT_SECONDS: float = 60.0
+    API_MAX_RESPONSE_SIZE_MB: int = 5
+    API_RESPONSE_BODY_RETENTION_BYTES: int = 262144
+    API_MAX_REDIRECTS: int = 5
+    API_EXECUTIONS_PER_MINUTE: int = 30
+    API_ALLOW_PRIVATE_NETWORKS: bool = False
+    API_ALLOW_INSECURE_SSL: bool = False
+    SECRET_ENCRYPTION_KEY: str | None = None
+
     @field_validator("DEBUG", mode="before")
     @classmethod
     def normalize_debug(cls, value: object) -> object:

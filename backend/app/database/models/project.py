@@ -33,6 +33,7 @@ class Project(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     created_by: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("users.id"), nullable=False)
     next_bug_number: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    next_api_run_number: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     creator: Mapped["User"] = relationship(back_populates="created_projects")
     members: Mapped[List["ProjectMember"]] = relationship(

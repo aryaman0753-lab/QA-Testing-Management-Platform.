@@ -96,6 +96,7 @@ def _base_detail_query():
         joinedload(Bug.project),
         joinedload(Bug.reporter),
         joinedload(Bug.assignee),
+        joinedload(Bug.discovered_from_test_result),
         selectinload(Bug.comments).joinedload(BugComment.user),
         selectinload(Bug.attachments).joinedload(BugAttachment.uploader),
         selectinload(Bug.history).joinedload(BugHistory.user),

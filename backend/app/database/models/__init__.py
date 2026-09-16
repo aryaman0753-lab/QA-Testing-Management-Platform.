@@ -8,6 +8,11 @@ from app.database.models.project_member import ProjectMember, ProjectRole  # noq
 from app.database.models.bug import (  # noqa: F401
     Bug, BugAttachment, BugComment, BugHistory, BugPriority, BugSeverity, BugStatus,
 )
+from app.database.models.api_testing import (  # noqa: F401
+    ApiAssertion, ApiAuditLog, ApiCollection, ApiEnvironment, ApiExtractor,
+    ApiRequest, ApiTestResult, ApiTestRun, AssertionOperator, AssertionType,
+    AuthenticationType, BodyType, ExecutionStatus, ExtractorSource, HttpMethod,
+)
 
 __all__ = [
     "Base",
@@ -18,4 +23,7 @@ __all__ = [
     "ProjectMember",
     "ProjectRole",
     "Bug", "BugAttachment", "BugComment", "BugHistory", "BugPriority", "BugSeverity", "BugStatus",
+    "ApiAssertion", "ApiAuditLog", "ApiCollection", "ApiEnvironment", "ApiExtractor",
+    "ApiRequest", "ApiTestResult", "ApiTestRun", "AssertionOperator", "AssertionType",
+    "AuthenticationType", "BodyType", "ExecutionStatus", "ExtractorSource", "HttpMethod",
 ]
