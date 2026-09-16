@@ -72,7 +72,7 @@ describe("API testing components", () => {
 
   it("validates JSON bodies and changes the selected environment", async () => {
     const bodyChange = vi.fn(); const environmentChange = vi.fn(); const user = userEvent.setup();
-    render(<ToastProvider><BodyEditor type="JSON" body="{invalid" onType={() => undefined} onBody={bodyChange} /><EnvironmentSelector environments={[{ id: "env-1", project_id: "project-1", name: "QA", variables: [], created_by: "qa", created_at: "2026-09-15T00:00:00Z", updated_at: "2026-09-15T00:00:00Z" }]} value="" onChange={environmentChange} onManage={() => undefined} /></ToastProvider>);
+    render(<ToastProvider><BodyEditor type="JSON" body="{invalid" onType={() => undefined} onBody={bodyChange} /><EnvironmentSelector environments={[{ id: "env-1", project_id: "project-1", name: "QA", classification: "QA", variables: [], created_by: "qa", created_at: "2026-09-15T00:00:00Z", updated_at: "2026-09-15T00:00:00Z" }]} value="" onChange={environmentChange} onManage={() => undefined} /></ToastProvider>);
     await user.click(screen.getByRole("button", { name: "Format & validate" }));
     expect(screen.getByText("Invalid JSON.")).toBeInTheDocument();
     await user.selectOptions(screen.getByLabelText("Environment"), "env-1");

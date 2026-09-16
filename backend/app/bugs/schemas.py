@@ -157,6 +157,14 @@ class ApiTestSourceSummary(BaseModel):
     resolved_url: str
 
 
+class LoadTestSourceSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    load_test_id: uuid.UUID
+    run_key: str
+    threshold_results: list[dict]
+
+
 class BugDetail(BugListItem):
     description: str
     steps_to_reproduce: list[str]
@@ -173,6 +181,8 @@ class BugDetail(BugListItem):
     history: list[BugHistoryOut]
     discovered_from_test_result_id: uuid.UUID | None
     discovered_from_test_result: ApiTestSourceSummary | None
+    discovered_from_load_test_run_id: uuid.UUID | None
+    discovered_from_load_test_run: LoadTestSourceSummary | None
 
 
 class PaginatedBugs(BaseModel):

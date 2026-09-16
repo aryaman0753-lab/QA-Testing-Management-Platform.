@@ -1,9 +1,36 @@
-# QAHub - Phase 3
+# QAHub - Phase 4
 
 QAHub is a project-scoped QA platform with authentication, team membership, bug
-tracking, and secure functional API/URL testing. Phase 3 adds a lightweight
-Postman/Newman-style workflow without changing the Phase 1/2 contracts. Load and
-performance testing remains intentionally out of scope until Phase 4.
+tracking, secure functional API testing, and controlled load/performance testing.
+Phase 4 adds queued Locust execution without using FastAPI request workers as
+load generators or changing the Phase 1-3 contracts.
+
+## Phase 4 - Load & Performance Testing
+
+- Reusable standalone or API-request-backed definitions with smoke, baseline,
+  load, stress, spike, soak, and custom profiles
+- Redis queue plus a dedicated Locust worker container with CPU/memory limits
+- Server-enforced user, spawn-rate, duration, RPS, and concurrency ceilings
+- Separate lifecycle and result states, worker heartbeats, stale-run recovery,
+  cancellation, immutable configuration snapshots, and configurable retention
+- Aggregate RPS, failure rate, average/min/max, p50/p75/p90/p95/p99, HTTP status,
+  endpoint, error, and sampled time-series metrics; raw response bodies are not kept
+- Project and server hostname allowlists, DNS/IP/redirect revalidation, secret
+  masking, private/metadata address blocking, and production execution controls
+- Live polling dashboard, run history, baselines, comparisons, CSV/JSON reports,
+  threshold pass/fail results, and editable bugs linked to threshold violations
+
+### Load execution architecture
+
+```text
+FastAPI validates policy + target -> Redis run-id queue -> dedicated load-worker
+    -> re-resolve environment/secrets + revalidate target -> Locust runner
+    -> aggregate samples/endpoints/errors -> Postgres -> polling UI/report/bug
+```
+
+The queue contains identifiers only. Secrets remain encrypted in definitions,
+are resolved inside the worker immediately before execution, and never appear in
+the queue, run snapshot, logs, metrics, or report URLs.
 
 ## Phase 3 - API & URL Testing
 
@@ -185,9 +212,10 @@ inline in `.env.example`.
 docker compose up --build
 ```
 
-This starts four containers: `db` (Postgres), `redis`, `backend` (runs
-`alembic upgrade head` then Uvicorn on port 8000), and `frontend` (Vite build
-served by nginx on port 5173). Once healthy:
+This starts five containers: `db` (Postgres), `redis`, `backend` (runs
+`alembic upgrade head` then Uvicorn on port 8000), `load-worker` (the isolated
+Locust consumer), and `frontend` (Vite build served by nginx on port 5173).
+Once healthy:
 
 - Frontend: http://localhost:5173
 - API docs: http://localhost:8000/docs (Swagger) and http://localhost:8000/redoc
@@ -227,6 +255,13 @@ python -m app.seed          # optional: creates dev accounts, see below
 uvicorn app.main:app --reload
 ```
 
+In another terminal, start the dedicated load worker (Redis must be available):
+
+```bash
+cd backend
+python -m workers.load_testing.worker
+```
+
 > **Note on Python 3.14 / Windows**: if you're on a very new Python and hit a
 > `link.exe failed` error installing `pydantic-core`, or an `OSError` on
 > `psycopg_binary...dll` mentioning long paths, see "Development Workflow"
@@ -255,9 +290,12 @@ pytest -v
 The pytest suite covers Phases 1/2 plus API definition CRUD, collection runs,
 chaining, persistence, analytics, bug linking, permissions, secret masking,
 HTTP construction, every supported method, assertions, SSRF rejection,
-redirect validation, timeouts, and response-size limits. Vitest covers the bug
+redirect validation, timeouts, response-size limits, load thresholds, target
+allowlists, queue/concurrency behavior, cancellation, run history, reports,
+baselines, and an isolated real Locust execution. Vitest covers the bug
 workflow and the API builder's methods, parameters, body, authentication,
-assertions, execution response, collection tree, and run-result presentation.
+assertions, execution response, collection tree, load form, production warning,
+threshold editor, and time-series presentation.
 
 ```bash
 cd frontend
@@ -300,6 +338,26 @@ GET         /api/v1/api/runs?project_id={project_id}
 GET         /api/v1/api/runs/{run_id}
 GET         /api/v1/api/results/{result_id}/bug-suggestion
 POST        /api/v1/api/results/{result_id}/bugs
+```
+
+### Load-testing endpoints
+
+```http
+POST/GET    /api/v1/projects/{project_id}/load-tests
+GET/PUT     /api/v1/projects/{project_id}/load-tests/settings
+GET         /api/v1/projects/{project_id}/load-tests/runs
+GET         /api/v1/projects/{project_id}/load-tests/runs/compare
+GET/PATCH/DELETE /api/v1/load-tests/{test_id}
+POST        /api/v1/load-tests/{test_id}/run
+GET         /api/v1/load-tests/runs/{run_id}
+POST        /api/v1/load-tests/runs/{run_id}/stop
+POST        /api/v1/load-tests/runs/{run_id}/baseline
+GET         /api/v1/load-tests/runs/{run_id}/metrics
+GET         /api/v1/load-tests/runs/{run_id}/endpoints
+GET         /api/v1/load-tests/runs/{run_id}/errors
+GET         /api/v1/load-tests/runs/{run_id}/report.json
+GET         /api/v1/load-tests/runs/{run_id}/report.csv
+GET/POST    /api/v1/load-tests/runs/{run_id}/bug-suggestion|bugs
 ```
 
 To run tests from the UI, open a project, select **API Testing**, create a
@@ -428,8 +486,7 @@ test-result fields into the bug model.
 ## 16. Future Roadmap
 
 - `test_cases/` — test case management
-- `load_testing/` + `workers/` — load test execution, likely via a queue backed
-  by the Redis instance already provisioned
+- `test_cases/` automation and scheduling for repeatable functional suites
 - `reports/` — aggregating results from the above
 - `notifications/` — using the membership model already in place to know who to
   notify about what project
@@ -437,7 +494,7 @@ test-result fields into the bug model.
 None of these require changing `auth`, `users`, `projects`, or the database
 session/dependency setup — that's the point of Phase 1.
 
-## Phase 3 operational limits and Phase 4 direction
+## Phase 4 operational limits
 
 - Rate limiting is intentionally process-local in Phase 3. A multi-replica
   deployment should move counters to Redis.
@@ -452,9 +509,7 @@ session/dependency setup — that's the point of Phase 1.
   Connection and TLS phase timings are not claimed because HTTPX does not expose
   them reliably through the current transport API.
 
-Phase 4 should introduce immutable load-test definitions that reference the
-existing request/environment layer, enqueue jobs in Redis, execute them in
-isolated Locust worker processes with strict outbound policy and quotas, stream
-aggregate metrics rather than raw responses, and persist summarized results.
-Functional assertions and bug creation can then consume those result records
-through adapters without coupling functional execution to load concurrency.
+Load generation is intentionally single-worker and polling-based in this phase.
+Distributed generators, multi-region orchestration, Kubernetes autoscaling,
+cloud execution, browser performance testing, AI recommendations, and automated
+production scheduling are explicitly outside the current scope.

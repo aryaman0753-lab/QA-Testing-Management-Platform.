@@ -2,7 +2,7 @@ import enum
 import uuid
 from typing import TYPE_CHECKING, List
 
-from sqlalchemy import Enum, ForeignKey, Integer, String, Text
+from sqlalchemy import Boolean, Enum, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.models.base import Base, TimestampMixin, UUIDPrimaryKeyMixin
@@ -34,6 +34,9 @@ class Project(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     created_by: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("users.id"), nullable=False)
     next_bug_number: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     next_api_run_number: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    next_load_run_number: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    load_allowlist_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    load_allowed_hosts: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
 
     creator: Mapped["User"] = relationship(back_populates="created_projects")
     members: Mapped[List["ProjectMember"]] = relationship(

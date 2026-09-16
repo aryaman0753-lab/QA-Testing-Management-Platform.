@@ -13,6 +13,11 @@ from app.database.models.api_testing import (  # noqa: F401
     ApiRequest, ApiTestResult, ApiTestRun, AssertionOperator, AssertionType,
     AuthenticationType, BodyType, ExecutionStatus, ExtractorSource, HttpMethod,
 )
+from app.database.models.load_testing import (  # noqa: F401
+    EnvironmentClassification, LoadTest, LoadTestAuditLog, LoadTestEndpointMetric,
+    LoadTestError, LoadTestMetric, LoadTestProfile, LoadTestResultStatus,
+    LoadTargetType, LoadTestRun, LoadTestStatus,
+)
 
 __all__ = [
     "Base",
@@ -26,4 +31,7 @@ __all__ = [
     "ApiAssertion", "ApiAuditLog", "ApiCollection", "ApiEnvironment", "ApiExtractor",
     "ApiRequest", "ApiTestResult", "ApiTestRun", "AssertionOperator", "AssertionType",
     "AuthenticationType", "BodyType", "ExecutionStatus", "ExtractorSource", "HttpMethod",
+    "EnvironmentClassification", "LoadTest", "LoadTestAuditLog", "LoadTestEndpointMetric",
+    "LoadTestError", "LoadTestMetric", "LoadTestProfile", "LoadTestResultStatus",
+    "LoadTargetType", "LoadTestRun", "LoadTestStatus",
 ]

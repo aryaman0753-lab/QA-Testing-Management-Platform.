@@ -26,7 +26,7 @@ def _allowed_ip(address: str, allow_private: bool) -> bool:
     return allow_private or ip.is_global
 
 
-async def validate_and_pin_url(url: str) -> PinnedUrl:
+async def validate_and_pin_url(url: str, allow_private: bool | None = None) -> PinnedUrl:
     settings = get_settings()
     parsed = urlsplit(url)
     if parsed.scheme.lower() not in {"http", "https"}:
@@ -48,7 +48,8 @@ async def validate_and_pin_url(url: str) -> PinnedUrl:
         raise ValidationAppError("The hostname could not be resolved.") from exc
     dns_ms = (perf_counter() - started) * 1000
     addresses = list(dict.fromkeys(record[4][0] for record in records))
-    if not addresses or any(not _allowed_ip(address, settings.API_ALLOW_PRIVATE_NETWORKS) for address in addresses):
+    private_allowed = settings.API_ALLOW_PRIVATE_NETWORKS if allow_private is None else allow_private
+    if not addresses or any(not _allowed_ip(address, private_allowed) for address in addresses):
         raise ValidationAppError("The destination resolves to a private, reserved, or internal address.")
     selected = addresses[0]
     ip_host = f"[{selected}]" if ":" in selected else selected

@@ -12,8 +12,8 @@ export const getApiRequest = (id: string) => apiClient.get<ApiRequest>(`/api/req
 export const updateApiRequest = (id: string, payload: ApiRequestPayload) => apiClient.put<ApiRequest>(`/api/requests/${id}`, payload);
 export const deleteApiRequest = (id: string) => apiClient.delete(`/api/requests/${id}`);
 export const listApiEnvironments = (projectId: string) => apiClient.get<ApiEnvironment[]>(`/projects/${projectId}/api/environments`);
-export const createApiEnvironment = (projectId: string, payload: { name: string; variables: ApiEnvironment["variables"] }) => apiClient.post<ApiEnvironment>(`/projects/${projectId}/api/environments`, payload);
-export const updateApiEnvironment = (id: string, payload: { name: string; variables: ApiEnvironment["variables"] }) => apiClient.put<ApiEnvironment>(`/api/environments/${id}`, payload);
+export const createApiEnvironment = (projectId: string, payload: { name: string; classification: ApiEnvironment["classification"]; variables: ApiEnvironment["variables"] }) => apiClient.post<ApiEnvironment>(`/projects/${projectId}/api/environments`, payload);
+export const updateApiEnvironment = (id: string, payload: { name: string; classification: ApiEnvironment["classification"]; variables: ApiEnvironment["variables"] }) => apiClient.put<ApiEnvironment>(`/api/environments/${id}`, payload);
 export const deleteApiEnvironment = (id: string) => apiClient.delete(`/api/environments/${id}`);
 export const executeApiRequest = (id: string, environmentId?: string) => apiClient.post<ApiRun>(`/api/requests/${id}/execute`, { environment_id: environmentId || null });
 export const executeApiCollection = (id: string, environmentId?: string, requestIds?: string[]) => apiClient.post<ApiRun>(`/api/collections/${id}/execute`, { environment_id: environmentId || null, request_ids: requestIds });

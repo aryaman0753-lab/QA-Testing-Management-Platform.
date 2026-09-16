@@ -220,14 +220,14 @@ def _protect_variables(incoming, current: dict | None = None) -> dict:
 
 def environment_out(environment: ApiEnvironment) -> EnvironmentOut:
     variables = [{"name": key, "value": MASK if item.get("is_secret") and item.get("value") else item.get("value", ""), "is_secret": bool(item.get("is_secret"))} for key, item in environment.variables.items()]
-    return EnvironmentOut.model_validate({"id": environment.id, "project_id": environment.project_id, "name": environment.name, "variables": variables, "created_by": environment.created_by, "created_at": environment.created_at, "updated_at": environment.updated_at})
+    return EnvironmentOut.model_validate({"id": environment.id, "project_id": environment.project_id, "name": environment.name, "variables": variables, "classification": environment.classification, "created_by": environment.created_by, "created_at": environment.created_at, "updated_at": environment.updated_at})
 
 
 def create_environment(db: Session, project_id: uuid.UUID, payload: EnvironmentCreate, user: User) -> EnvironmentOut:
     _require_manage(db, project_id, user)
     if db.scalar(select(ApiEnvironment).where(ApiEnvironment.project_id == project_id, func.lower(ApiEnvironment.name) == payload.name.lower())):
         raise ConflictError("An environment with this name already exists.")
-    environment = ApiEnvironment(project_id=project_id, name=payload.name, variables=_protect_variables(payload.variables), created_by=user.id)
+    environment = ApiEnvironment(project_id=project_id, name=payload.name, variables=_protect_variables(payload.variables), classification=payload.classification.value, created_by=user.id)
     db.add(environment); db.flush(); _audit(db, project_id, user, "ENVIRONMENT_CREATED", "environment", environment.id); db.commit(); db.refresh(environment)
     return environment_out(environment)
 
@@ -247,7 +247,7 @@ def get_environment(db: Session, environment_id: uuid.UUID, user: User, manage: 
 
 def update_environment(db: Session, environment_id: uuid.UUID, payload: EnvironmentCreate, user: User) -> EnvironmentOut:
     environment = get_environment(db, environment_id, user, manage=True)
-    environment.name = payload.name; environment.variables = _protect_variables(payload.variables, environment.variables)
+    environment.name = payload.name; environment.variables = _protect_variables(payload.variables, environment.variables); environment.classification = payload.classification.value
     _audit(db, environment.project_id, user, "ENVIRONMENT_UPDATED", "environment", environment.id); db.commit(); db.refresh(environment)
     return environment_out(environment)
 

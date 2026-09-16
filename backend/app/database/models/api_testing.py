@@ -141,6 +141,7 @@ class ApiEnvironment(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     project_id: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     variables: Mapped[dict] = mapped_column(JSON, nullable=False, default=dict)
+    classification: Mapped[str] = mapped_column(String(16), nullable=False, default="QA")
     created_by: Mapped[uuid.UUID] = mapped_column(GUID(), ForeignKey("users.id"), nullable=False)
     creator = relationship("User")
 

@@ -2,7 +2,7 @@
 
 This document explains how bug tracking and secure functional API testing are
 added without duplicating auth, users, projects, or database/session plumbing,
-and how the same boundaries prepare QAHub for later load testing.
+and how load testing is isolated from the interactive application process.
 
 ## Layering inside a module
 
@@ -49,7 +49,12 @@ User --< ProjectMember >-- Project --< Bug
                                   |                       |--< ApiAssertion
                                   |                       `--< ApiExtractor
                                   |--< ApiEnvironment
-                                  `--< ApiTestRun --< ApiTestResult --< Bug (optional source)
+                                  |--< ApiTestRun --< ApiTestResult --< Bug (optional source)
+                                  `--< LoadTest --< LoadTestRun
+                                                   |--< LoadTestMetric
+                                                   |--< LoadTestEndpointMetric
+                                                   |--< LoadTestError
+                                                   `--< Bug (optional source)
 ```
 
 `ProjectMember` is a real entity (with its own `id`, not just a composite key)
@@ -160,8 +165,34 @@ pages/      One file per route, composed from api/ + components/.
 The API Testing navigation resolves the active project from the current route.
 The workspace is composed from focused editors (auth, body, key/value,
 assertions, extractors, environments, response viewer, and collection tree),
-with separate pages for the builder, run history, and run details. Load Tests
-remains a disabled placeholder.
+with separate pages for the builder, run history, and run details. Load Testing
+adds definition/edit pages, history, a polling live dashboard, and comparison.
+
+## Load execution boundary
+
+`app/load_testing/` owns definition policy, authorization, limits, queueing,
+reporting, comparisons, and result schemas. The API validates the resolved URL,
+creates an immutable run snapshot, and enqueues only the run UUID in Redis. It
+never generates load.
+
+`workers/load_testing/` is a separately deployed process. It reads the run UUID,
+reloads and decrypts the referenced request/environment, revalidates the target,
+and invokes the Locust adapter. Aggregate samples are committed periodically so
+the UI can poll safely. Stop requests use a short-lived Redis key checked by the
+running engine. A heartbeat lets API-side recovery mark abandoned active runs as
+failed. Terminal, non-baseline runs are eligible for configured retention cleanup.
+
+```text
+browser -> FastAPI policy/persistence -> Redis list -> Locust worker -> target
+             ^                           |               |
+             `------- Postgres metrics <-+---------------'
+```
+
+Both server-wide and project hostname allowlists are enforced, followed by the
+Phase 3 DNS/IP validator. Private, loopback, link-local, metadata, and mixed DNS
+answers remain denied unless the dedicated load-test private-network setting is
+explicitly enabled. Production classification additionally requires server
+enablement, an administrator, and per-run confirmation.
 
 ### Token storage
 

@@ -49,6 +49,7 @@ class Bug(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         UniqueConstraint("project_id", "bug_number", name="uq_bug_project_number"),
         Index("ix_bugs_project_status", "project_id", "status"),
         Index("ix_bugs_project_created", "project_id", "created_at"),
+        Index("ix_bugs_created_at", "created_at"),
     )
 
     project_id: Mapped[uuid.UUID] = mapped_column(
@@ -86,6 +87,9 @@ class Bug(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     discovered_from_test_result_id: Mapped[uuid.UUID | None] = mapped_column(
         GUID(), ForeignKey("api_test_results.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    discovered_from_load_test_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        GUID(), ForeignKey("load_test_runs.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     project: Mapped["Project"] = relationship(back_populates="bugs")
     reporter: Mapped["User"] = relationship(foreign_keys=[reported_by])
@@ -94,6 +98,7 @@ class Bug(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     history: Mapped[List["BugHistory"]] = relationship(back_populates="bug", cascade="all, delete-orphan")
     attachments: Mapped[List["BugAttachment"]] = relationship(back_populates="bug", cascade="all, delete-orphan")
     discovered_from_test_result: Mapped["ApiTestResult | None"] = relationship(foreign_keys=[discovered_from_test_result_id])
+    discovered_from_load_test_run = relationship("LoadTestRun", foreign_keys=[discovered_from_load_test_run_id])
 
     @property
     def bug_key(self) -> str:

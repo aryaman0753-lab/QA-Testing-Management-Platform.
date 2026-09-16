@@ -1,0 +1,20 @@
+import { apiClient } from "./client";
+import type { BugDetail, BugPayload } from "../types";
+import type { AllowlistSettings, LoadComparison, LoadRun, LoadRunDetail, LoadTest, LoadTestPayload, PaginatedLoadRuns } from "../types/loadTesting";
+
+export const listLoadTests = (projectId: string) => apiClient.get<LoadTest[]>(`/projects/${projectId}/load-tests`);
+export const getLoadTest = (testId: string) => apiClient.get<LoadTest>(`/load-tests/${testId}`);
+export const createLoadTest = (projectId: string, payload: LoadTestPayload) => apiClient.post<LoadTest>(`/projects/${projectId}/load-tests`, payload);
+export const updateLoadTest = (testId: string, payload: LoadTestPayload) => apiClient.patch<LoadTest>(`/load-tests/${testId}`, payload);
+export const archiveLoadTest = (testId: string) => apiClient.delete(`/load-tests/${testId}`);
+export const startLoadTest = (testId: string, confirmProduction = false) => apiClient.post<LoadRun>(`/load-tests/${testId}/run`, { confirm_production: confirmProduction });
+export const listLoadRuns = (projectId: string, page = 1) => apiClient.get<PaginatedLoadRuns>(`/projects/${projectId}/load-tests/runs`, { params: { page, page_size: 20 } });
+export const getLoadRun = (runId: string) => apiClient.get<LoadRunDetail>(`/load-tests/runs/${runId}`);
+export const stopLoadRun = (runId: string) => apiClient.post<LoadRun>(`/load-tests/runs/${runId}/stop`);
+export const markLoadBaseline = (runId: string) => apiClient.post<LoadRun>(`/load-tests/runs/${runId}/baseline`);
+export const compareLoadRuns = (projectId: string, runA: string, runB: string) => apiClient.get<LoadComparison>(`/projects/${projectId}/load-tests/runs/compare`, { params: { run_a: runA, run_b: runB } });
+export const getLoadSettings = (projectId: string) => apiClient.get<AllowlistSettings>(`/projects/${projectId}/load-tests/settings`);
+export const updateLoadSettings = (projectId: string, settings: AllowlistSettings) => apiClient.put<AllowlistSettings>(`/projects/${projectId}/load-tests/settings`, settings);
+export const getLoadBugSuggestion = (runId: string) => apiClient.get<BugPayload>(`/load-tests/runs/${runId}/bug-suggestion`);
+export const createBugFromLoadRun = (runId: string, payload: BugPayload) => apiClient.post<BugDetail>(`/load-tests/runs/${runId}/bugs`, payload);
+export const downloadLoadReport = (runId: string, format: "json" | "csv") => apiClient.get<Blob>(`/load-tests/runs/${runId}/report.${format}`, { responseType: "blob" });

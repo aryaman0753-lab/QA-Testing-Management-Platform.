@@ -18,7 +18,7 @@ export interface ApiRequestPayload {
 export interface ApiRequest extends ApiRequestPayload { id: string; project_id: string; collection_id: string; created_by: string; created_at: string; updated_at: string; }
 export interface ApiCollection { id: string; project_id: string; name: string; description: string | null; created_by: string; created_at: string; updated_at: string; request_count: number; requests?: ApiRequest[]; }
 export interface EnvironmentVariable { name: string; value: string; is_secret: boolean; }
-export interface ApiEnvironment { id: string; project_id: string; name: string; variables: EnvironmentVariable[]; created_by: string; created_at: string; updated_at: string; }
+export interface ApiEnvironment { id: string; project_id: string; name: string; classification: "DEVELOPMENT" | "TEST" | "QA" | "STAGING" | "PRODUCTION"; variables: EnvironmentVariable[]; created_by: string; created_at: string; updated_at: string; }
 export interface AssertionResult { assertion_type: string; passed: boolean; description: string; expected: string | null; actual: string | null; }
 export interface ApiTestResult {
   id: string; test_run_id: string; request_id: string; request_name: string; method: string;

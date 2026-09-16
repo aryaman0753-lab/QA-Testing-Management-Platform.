@@ -124,6 +124,8 @@ export interface BugDetail extends BugListItem {
   history: BugHistoryEntry[];
   discovered_from_test_result_id: string | null;
   discovered_from_test_result: { id: string; test_run_id: string; request_name: string; method: string; resolved_url: string } | null;
+  discovered_from_load_test_run_id: string | null;
+  discovered_from_load_test_run: { id: string; load_test_id: string; run_key: string; threshold_results: { label: string; measured: number; threshold: number; unit: string; passed: boolean }[] } | null;
 }
 
 export interface BugPayload {

@@ -18,6 +18,7 @@ from app.database.models.api_testing import (
     AssertionType, AuthenticationType, BodyType, HttpMethod,
 )
 from app.api_testing.secrets import encrypt
+from app.database.models.load_testing import LoadTargetType, LoadTest, LoadTestProfile
 
 configure_logging()
 logger = get_logger(__name__)
@@ -122,7 +123,7 @@ def seed() -> None:
         api_collection = db.query(ApiCollection).filter(ApiCollection.project_id == ecom.id, ApiCollection.name == "ECOM API").first()
         if api_collection is None:
             environment = ApiEnvironment(
-                project_id=ecom.id, name="QA", created_by=admin.id,
+                project_id=ecom.id, name="QA", classification="QA", created_by=admin.id,
                 variables={
                     "base_url": {"value": "https://api.example.test", "is_secret": False},
                     "user_id": {"value": "1", "is_secret": False},
@@ -149,6 +150,26 @@ def seed() -> None:
                 db.add(api_request); db.flush()
                 db.add(ApiAssertion(request_id=api_request.id, assertion_type=AssertionType.STATUS_CODE, operator=AssertionOperator.LESS_THAN, expected_value="400", position=0))
             logger.info("Seeded ECOM API collection and QA environment")
+
+        environment = db.query(ApiEnvironment).filter(ApiEnvironment.project_id == ecom.id, ApiEnvironment.name == "QA").first()
+        source_request = db.query(ApiRequest).filter(ApiRequest.project_id == ecom.id, ApiRequest.name == "Get Users").first()
+        ecom.load_allowlist_enabled = True
+        ecom.load_allowed_hosts = ["api.example.test"]
+        if environment and source_request and db.query(LoadTest).filter(LoadTest.project_id == ecom.id, LoadTest.name == "ECOM API Baseline").first() is None:
+            db.add(LoadTest(
+                project_id=ecom.id, name="ECOM API Baseline",
+                description="Safe starter definition. Replace the example host with an authorized QA target before running.",
+                target_type=LoadTargetType.API_REQUEST,
+                api_request_id=source_request.id, environment_id=environment.id,
+                target_url=source_request.url, request_method=source_request.method,
+                headers=[], query_parameters=[], body=None, body_type=BodyType.NONE,
+                authentication_type=AuthenticationType.NONE, authentication_config={},
+                profile=LoadTestProfile.BASELINE, virtual_users=5, spawn_rate=1,
+                duration_seconds=60, timeout_seconds=10, target_rps=5,
+                thresholds={"max_p95_ms": 750, "max_p99_ms": 1500, "max_failure_rate": 1, "max_error_count": 0},
+                created_by=admin.id,
+            ))
+            logger.info("Seeded ECOM API baseline load test")
 
         db.commit()
         print("Seed complete. Development accounts (password for all: 'Password123!'):")

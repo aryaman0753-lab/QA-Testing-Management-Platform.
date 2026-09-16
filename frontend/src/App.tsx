@@ -16,6 +16,12 @@ import { BugDetails } from "./pages/BugDetails";
 import { ApiTesting } from "./pages/ApiTesting";
 import { ApiRuns } from "./pages/ApiRuns";
 import { ApiRunDetails } from "./pages/ApiRunDetails";
+import { LoadTesting } from "./pages/LoadTesting";
+import { CreateLoadTest } from "./pages/CreateLoadTest";
+import { LoadTestDetails } from "./pages/LoadTestDetails";
+import { LoadRuns } from "./pages/LoadRuns";
+import { LoadRunDetails } from "./pages/LoadRunDetails";
+import { LoadCompare } from "./pages/LoadCompare";
 
 function RedirectIfAuthenticated({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -79,6 +85,12 @@ export default function App() {
           <Route path="/projects/:projectId/api-testing/requests/:requestId" element={<ProtectedRoute><ApiTesting /></ProtectedRoute>} />
           <Route path="/projects/:projectId/api-testing/runs" element={<ProtectedRoute><ApiRuns /></ProtectedRoute>} />
           <Route path="/projects/:projectId/api-testing/runs/:runId" element={<ProtectedRoute><ApiRunDetails /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/load-testing" element={<ProtectedRoute><LoadTesting /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/load-testing/create" element={<ProtectedRoute><CreateLoadTest /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/load-testing/runs" element={<ProtectedRoute><LoadRuns /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/load-testing/runs/:runId" element={<ProtectedRoute><LoadRunDetails /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/load-testing/compare" element={<ProtectedRoute><LoadCompare /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/load-testing/:testId" element={<ProtectedRoute><LoadTestDetails /></ProtectedRoute>} />
           <Route
             path="/projects/:id"
             element={

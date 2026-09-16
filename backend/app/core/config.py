@@ -50,6 +50,31 @@ class Settings(BaseSettings):
     API_ALLOW_INSECURE_SSL: bool = False
     SECRET_ENCRYPTION_KEY: str | None = None
 
+    # Isolated Locust worker / load-testing safety limits (Phase 4)
+    LOAD_TEST_MAX_USERS: int = 100
+    LOAD_TEST_MAX_DURATION_SECONDS: int = 600
+    LOAD_TEST_MAX_SPAWN_RATE: float = 20.0
+    LOAD_TEST_MAX_TARGET_RPS: float = 500.0
+    LOAD_TEST_MAX_CONCURRENT_PER_USER: int = 1
+    LOAD_TEST_MAX_CONCURRENT_PER_PROJECT: int = 2
+    LOAD_TEST_MAX_CONCURRENT_RUNS: int = 3
+    LOAD_TEST_MAX_RESPONSE_SIZE_BYTES: int = 1_048_576
+    LOAD_TEST_ALLOW_PRIVATE_NETWORKS: bool = False
+    LOAD_TEST_ALLOW_PRODUCTION: bool = False
+    LOAD_TEST_PRODUCTION_MAX_USERS: int = 10
+    LOAD_TEST_PRODUCTION_MAX_DURATION_SECONDS: int = 60
+    LOAD_TEST_PRODUCTION_MAX_TARGET_RPS: float = 20.0
+    LOAD_TEST_REQUIRE_ALLOWLIST: bool = True
+    LOAD_TEST_ALLOWED_HOSTS: str = ""
+    LOAD_TEST_RESULT_RETENTION_DAYS: int = 30
+    LOAD_TEST_METRICS_INTERVAL_SECONDS: float = 2.0
+    LOAD_TEST_STALE_RUN_SECONDS: int = 90
+    LOAD_TEST_QUEUE_NAME: str = "qahub:load-tests"
+
+    @property
+    def load_test_allowed_hosts_list(self) -> List[str]:
+        return [host.strip().lower() for host in self.LOAD_TEST_ALLOWED_HOSTS.split(",") if host.strip()]
+
     @field_validator("DEBUG", mode="before")
     @classmethod
     def normalize_debug(cls, value: object) -> object:

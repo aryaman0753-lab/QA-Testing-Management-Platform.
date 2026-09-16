@@ -9,6 +9,7 @@ from app.database.models.api_testing import (
     AssertionOperator, AssertionType, AuthenticationType, BodyType,
     ExecutionStatus, ExtractorSource, HttpMethod,
 )
+from app.database.models.load_testing import EnvironmentClassification
 
 
 def clean_required(value: str) -> str:
@@ -134,6 +135,7 @@ class EnvironmentVariable(BaseModel):
 class EnvironmentCreate(BaseModel):
     name: Annotated[str, Field(max_length=100)]
     variables: list[EnvironmentVariable] = Field(default_factory=list, max_length=200)
+    classification: EnvironmentClassification = EnvironmentClassification.QA
     _name_required = field_validator("name")(clean_required)
 
 
@@ -146,6 +148,7 @@ class EnvironmentOut(BaseModel):
     project_id: uuid.UUID
     name: str
     variables: list[EnvironmentVariable]
+    classification: EnvironmentClassification
     created_by: uuid.UUID
     created_at: datetime
     updated_at: datetime
