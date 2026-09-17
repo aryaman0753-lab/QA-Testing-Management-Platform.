@@ -98,6 +98,8 @@ def _base_detail_query():
         joinedload(Bug.assignee),
         joinedload(Bug.discovered_from_test_result),
         joinedload(Bug.discovered_from_load_test_run),
+        joinedload(Bug.discovered_from_automation_run),
+        joinedload(Bug.discovered_from_automation_step_result),
         selectinload(Bug.comments).joinedload(BugComment.user),
         selectinload(Bug.attachments).joinedload(BugAttachment.uploader),
         selectinload(Bug.history).joinedload(BugHistory.user),

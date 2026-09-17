@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.auth.router import router as auth_router
+from app.automation.router import router as automation_router, project_router as project_automation_router
 from app.api_testing.router import api_router as api_testing_router, project_router as project_api_router
 from app.load_testing.router import load_router, project_router as project_load_router
 from app.bugs.router import attachment_router, bug_router, project_router as project_bugs_router
@@ -33,7 +34,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title=settings.APP_NAME,
     description="QAHub API - projects, bugs, functional API testing, and isolated performance testing.",
-    version="0.4.0",
+    version="0.5.0",
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
@@ -55,7 +56,9 @@ def handle_app_error(request: Request, exc: AppError) -> JSONResponse:
 
 @app.exception_handler(RequestValidationError)
 def handle_validation_error(request: Request, exc: RequestValidationError) -> JSONResponse:
-    return JSONResponse(status_code=422, content={"detail": jsonable_encoder(exc.errors())})
+    # Pydantic's `input` and `ctx` may contain submitted passwords or tokens.
+    errors = [{key: value for key, value in error.items() if key in {"type", "loc", "msg"}} for error in exc.errors()]
+    return JSONResponse(status_code=422, content={"detail": jsonable_encoder(errors)})
 
 
 @app.exception_handler(Exception)
@@ -76,3 +79,5 @@ app.include_router(project_api_router, prefix=settings.API_V1_PREFIX)
 app.include_router(api_testing_router, prefix=settings.API_V1_PREFIX)
 app.include_router(project_load_router, prefix=settings.API_V1_PREFIX)
 app.include_router(load_router, prefix=settings.API_V1_PREFIX)
+app.include_router(project_automation_router, prefix=settings.API_V1_PREFIX)
+app.include_router(automation_router, prefix=settings.API_V1_PREFIX)

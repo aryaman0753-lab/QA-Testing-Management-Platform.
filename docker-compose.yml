@@ -1,3 +1,20 @@
+x-automation-environment: &automation-environment
+  AUTOMATION_ALLOW_PRODUCTION: ${AUTOMATION_ALLOW_PRODUCTION:-false}
+  AUTOMATION_ALLOW_PRIVATE_NETWORKS: ${AUTOMATION_ALLOW_PRIVATE_NETWORKS:-false}
+  AUTOMATION_ALLOWED_HOSTS: ${AUTOMATION_ALLOWED_HOSTS:-}
+  AUTOMATION_MAX_CONCURRENT_RUNS: ${AUTOMATION_MAX_CONCURRENT_RUNS:-3}
+  AUTOMATION_MAX_CONCURRENT_PER_PROJECT: ${AUTOMATION_MAX_CONCURRENT_PER_PROJECT:-2}
+  AUTOMATION_MAX_CONCURRENT_PER_USER: ${AUTOMATION_MAX_CONCURRENT_PER_USER:-1}
+  AUTOMATION_MAX_STEPS: ${AUTOMATION_MAX_STEPS:-200}
+  AUTOMATION_MAX_CASES: ${AUTOMATION_MAX_CASES:-50}
+  AUTOMATION_MAX_RUN_SECONDS: ${AUTOMATION_MAX_RUN_SECONDS:-900}
+  AUTOMATION_MAX_DELAY_SECONDS: ${AUTOMATION_MAX_DELAY_SECONDS:-30}
+  AUTOMATION_MAX_RETRIES: ${AUTOMATION_MAX_RETRIES:-3}
+  AUTOMATION_STALE_RUN_SECONDS: ${AUTOMATION_STALE_RUN_SECONDS:-120}
+  AUTOMATION_QUEUE_TIMEOUT_SECONDS: ${AUTOMATION_QUEUE_TIMEOUT_SECONDS:-900}
+  AUTOMATION_QUEUE_NAME: ${AUTOMATION_QUEUE_NAME:-qahub:automation}
+  AUTOMATION_SCHEDULER_INTERVAL_SECONDS: ${AUTOMATION_SCHEDULER_INTERVAL_SECONDS:-5}
+
 services:
   db:
     image: postgres:16-alpine
@@ -32,6 +49,7 @@ services:
       context: ./backend
     restart: unless-stopped
     environment:
+      <<: *automation-environment
       DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-qahub}:${POSTGRES_PASSWORD:-qahub_dev_password}@db:5432/${POSTGRES_DB:-qahub}
       REDIS_URL: redis://redis:6379/0
       JWT_SECRET_KEY: ${JWT_SECRET_KEY:-replace-with-a-long-random-secret}
@@ -127,6 +145,45 @@ services:
         condition: service_healthy
     cpus: "1.0"
     mem_limit: 1g
+
+  automation-worker:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    command: ["python", "-m", "workers.automation.worker"]
+    environment: &automation-runtime
+      <<: *automation-environment
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-qahub}:${POSTGRES_PASSWORD:-qahub_dev_password}@db:5432/${POSTGRES_DB:-qahub}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-replace-with-a-long-random-secret}
+      SECRET_ENCRYPTION_KEY: ${SECRET_ENCRYPTION_KEY:-}
+      API_REQUEST_TIMEOUT_SECONDS: ${API_REQUEST_TIMEOUT_SECONDS:-30}
+      API_MAX_TIMEOUT_SECONDS: ${API_MAX_TIMEOUT_SECONDS:-60}
+      API_MAX_RESPONSE_SIZE_MB: ${API_MAX_RESPONSE_SIZE_MB:-5}
+      API_RESPONSE_BODY_RETENTION_BYTES: ${API_RESPONSE_BODY_RETENTION_BYTES:-262144}
+      API_MAX_REDIRECTS: ${API_MAX_REDIRECTS:-5}
+      API_ALLOW_INSECURE_SSL: ${API_ALLOW_INSECURE_SSL:-false}
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    cpus: "1.0"
+    mem_limit: 512m
+
+  scheduler-worker:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    command: ["python", "-m", "workers.automation.scheduler"]
+    environment: *automation-runtime
+    depends_on:
+      backend:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    cpus: "0.5"
+    mem_limit: 256m
 
 volumes:
   qahub_postgres_data:

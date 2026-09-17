@@ -22,6 +22,11 @@ import { LoadTestDetails } from "./pages/LoadTestDetails";
 import { LoadRuns } from "./pages/LoadRuns";
 import { LoadRunDetails } from "./pages/LoadRunDetails";
 import { LoadCompare } from "./pages/LoadCompare";
+import { Automation } from "./pages/Automation";
+import { AutomationSuiteBuilder } from "./pages/AutomationSuiteBuilder";
+import { AutomationRuns } from "./pages/AutomationRuns";
+import { AutomationRunDetails } from "./pages/AutomationRunDetails";
+import { AutomationSchedules } from "./pages/AutomationSchedules";
 
 function RedirectIfAuthenticated({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -91,6 +96,11 @@ export default function App() {
           <Route path="/projects/:projectId/load-testing/runs/:runId" element={<ProtectedRoute><LoadRunDetails /></ProtectedRoute>} />
           <Route path="/projects/:projectId/load-testing/compare" element={<ProtectedRoute><LoadCompare /></ProtectedRoute>} />
           <Route path="/projects/:projectId/load-testing/:testId" element={<ProtectedRoute><LoadTestDetails /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/automation" element={<ProtectedRoute><Automation /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/automation/suites/:suiteId" element={<ProtectedRoute><AutomationSuiteBuilder /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/automation/runs" element={<ProtectedRoute><AutomationRuns /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/automation/runs/:runId" element={<ProtectedRoute><AutomationRunDetails /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/automation/schedules" element={<ProtectedRoute><AutomationSchedules /></ProtectedRoute>} />
           <Route
             path="/projects/:id"
             element={

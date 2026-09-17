@@ -94,6 +94,7 @@ export function ProjectDetail() {
             <Link className="btn btn-primary link-button" to={`/projects/${project.id}/bugs`}>View Bugs</Link>
             <Link className="btn btn-secondary link-button" to={`/projects/${project.id}/api-testing`}>API Testing</Link>
             <Link className="btn btn-secondary link-button" to={`/projects/${project.id}/load-testing`}>Load Testing</Link>
+            <Link className="btn btn-secondary link-button" to={`/projects/${project.id}/automation`}>Automation</Link>
             <Button variant="secondary" onClick={() => setIsEditOpen(true)}>
               Edit
             </Button>
@@ -111,6 +112,7 @@ export function ProjectDetail() {
           <Link className="btn btn-primary link-button" to={`/projects/${project.id}/bugs`}>View Bugs</Link>
           <Link className="btn btn-secondary link-button" to={`/projects/${project.id}/api-testing`}>API Testing</Link>
           <Link className="btn btn-secondary link-button" to={`/projects/${project.id}/load-testing`}>Load Testing</Link>
+          <Link className="btn btn-secondary link-button" to={`/projects/${project.id}/automation`}>Automation</Link>
         </div>
       )}
 

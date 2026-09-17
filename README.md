@@ -1,9 +1,39 @@
-# QAHub - Phase 4
+# QAHub - Phase 5
 
 QAHub is a project-scoped QA platform with authentication, team membership, bug
-tracking, secure functional API testing, and controlled load/performance testing.
-Phase 4 adds queued Locust execution without using FastAPI request workers as
-load generators or changing the Phase 1-3 contracts.
+tracking, secure functional API testing, controlled load/performance testing,
+and reusable scheduled API automation. Phase 5 adds separate automation and
+scheduler workers while preserving the Phase 1-4 workflows.
+
+## Phase 5 - Advanced Automation & Scheduled Testing
+
+- Project-scoped suites, ordered cases, and a visual six-type step builder
+- Saved or standalone HTTP requests, assertions, extraction, assignment, delays,
+  and simple conditions with `${variable}` and `{{variable}}` substitution
+- Redis-backed execution, cancellation, attempt history, and automatic result aggregation
+- Five-field cron schedules with IANA timezones and overlapping-run prevention
+- Opt-in failure bugs linked to runs/results, with unresolved-failure deduplication
+- Dashboard, run history/detail, schedules, statistics, and failure trends
+- Encrypted secrets, masked results, destination allowlists, bounded requests,
+  production safeguards, and project/role checks
+
+See [the automation guide](docs/AUTOMATION.md) for API examples, configuration,
+worker operations, limitations, and a manual verification checklist.
+
+```sh
+docker compose up --build -d
+docker compose ps
+docker compose logs --tail=100 automation-worker scheduler-worker
+```
+
+The backend applies migration `0005_automation` before the new workers start.
+For local development, run `alembic upgrade head`, then start each worker in a
+separate terminal from `backend/` with the same database, Redis, and secret keys:
+
+```sh
+python -m workers.automation.worker
+python -m workers.automation.scheduler
+```
 
 ## Phase 4 - Load & Performance Testing
 
@@ -403,7 +433,7 @@ for local, non-Docker development. Key variables:
 | Variable | Purpose |
 |---|---|
 | `DATABASE_URL` | SQLAlchemy connection string (Postgres in prod/Docker) |
-| `REDIS_URL` | Reserved for future modules |
+| `REDIS_URL` | Redis queues for load testing and automation; scheduler coordination |
 | `JWT_SECRET_KEY` / `JWT_ALGORITHM` / `ACCESS_TOKEN_EXPIRE_MINUTES` | Token signing |
 | `CORS_ORIGINS` | Comma-separated allowed frontend origins |
 | `VITE_API_BASE_URL` | Frontend → backend base URL |
@@ -486,7 +516,7 @@ test-result fields into the bug model.
 ## 16. Future Roadmap
 
 - `test_cases/` — test case management
-- `test_cases/` automation and scheduling for repeatable functional suites
+- Browser/mobile engines behind the automation engine interface
 - `reports/` — aggregating results from the above
 - `notifications/` — using the membership model already in place to know who to
   notify about what project

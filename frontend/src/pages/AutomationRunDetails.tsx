@@ -1,0 +1,37 @@
+import { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { getAutomationRun, stopAutomationRun } from "../api/automation";
+import { extractErrorMessage } from "../api/client";
+import { AutomationBadge, AutomationError } from "../components/automation/AutomationShared";
+import { STEP_LABELS } from "../components/automation/StepEditor";
+import { AppLayout } from "../components/layout/AppLayout";
+import { Button } from "../components/ui/Button";
+import { LoadingSpinner } from "../components/ui/LoadingSpinner";
+import { useAuth } from "../context/AuthContext";
+import { useToast } from "../context/ToastContext";
+import type { AutomationRun, AutomationStepResult } from "../types/automation";
+
+const display = (value: unknown) => value === undefined || value === null ? "—" : typeof value === "string" ? value : JSON.stringify(value);
+export function AutomationRunDetails() {
+  const { projectId = "", runId = "" } = useParams(); const { user } = useAuth(); const { showToast } = useToast();
+  const [run, setRun] = useState<AutomationRun | null>(null); const [error, setError] = useState(""); const [retry, setRetry] = useState(0); const [busy, setBusy] = useState(false); const [selectedId, setSelectedId] = useState<string | null>(null);
+  const canManage = user?.role === "ADMIN" || user?.role === "QA_ENGINEER";
+  useEffect(() => {
+    let active = true; let timer: ReturnType<typeof setTimeout> | undefined;
+    async function poll() { try { const { data } = await getAutomationRun(runId); if (!active) return; setRun(data); setError(""); if (["QUEUED", "RUNNING"].includes(data.status)) timer = setTimeout(poll, 2000); } catch (reason) { if (active) setError(extractErrorMessage(reason)); } }
+    setRun(null); void poll(); return () => { active = false; clearTimeout(timer); };
+  }, [runId, retry]);
+  async function stop() { if (!run || !window.confirm("Stop this automation run? Remaining steps will be cancelled.")) return; setBusy(true); try { const { data } = await stopAutomationRun(run.id); setRun((current) => current ? { ...current, ...data, results: data.results ?? current.results } : data); showToast("Stop requested.", "success"); } catch (reason) { setError(extractErrorMessage(reason)); } finally { setBusy(false); } }
+  const results = run?.results ?? []; const selected = results.find((item) => item.id === selectedId) ?? results[0]; const active = run && ["QUEUED", "RUNNING"].includes(run.status);
+  return <AppLayout><Link className="bug-breadcrumb" to={`/projects/${projectId}/automation/runs`}>← Run history</Link>{error && <AutomationError message={error} retry={() => setRetry((value) => value + 1)} />}{!run ? !error && <LoadingSpinner /> : <><div className="page-header"><div><h1>{run.suite_name ?? "Automation run"}</h1><code>{run.id.slice(0, 8)}</code> <AutomationBadge status={run.status} /></div><div className="page-actions"><Link className="btn btn-secondary link-button" to={`/projects/${projectId}/automation/suites/${run.suite_id}`}>View suite</Link>{canManage && active && <Button variant="danger" isLoading={busy} disabled={run.stop_requested} onClick={stop}>{run.stop_requested ? "Stopping…" : "Stop run"}</Button>}</div></div>{active && <p className="live-indicator" role="status"><i />Results refresh every 2 seconds.{run.stop_requested ? " Cancellation is pending." : ""}</p>}
+    <section className="automation-stat-grid" aria-label="Run summary">{[["Cases passed", `${run.passed_cases}/${run.total_cases}`], ["Steps passed", `${run.passed_steps}/${run.total_steps}`], ["Failed steps", run.failed_steps], ["Skipped steps", run.skipped_steps], ["Duration", `${((run.duration_ms ?? 0) / 1000).toFixed(1)}s`], ["Trigger", run.trigger_type]].map(([label, value]) => <div key={label}><span>{label}</span><strong>{value}</strong></div>)}</section><p className="muted">{run.environment_name || "No environment"} · Created {new Date(run.created_at).toLocaleString()}{run.completed_at && ` · Completed ${new Date(run.completed_at).toLocaleString()}`}</p>{run.error_message && <AutomationError message={run.error_message} />}
+    {(run.linked_bugs?.length ?? 0) > 0 && <section className="panel"><h2>Linked bugs</h2><ul>{run.linked_bugs?.map((bug) => <li key={bug.id}><Link to={`/projects/${projectId}/bugs/${bug.id}`}>{bug.bug_key}: {bug.title}</Link> <AutomationBadge status={bug.status} /></li>)}</ul></section>}
+    <section className="panel automation-results-layout"><aside aria-label="Step attempts"><h2>Step results</h2>{!results.length && <p className="muted">{active ? "Waiting for the worker to report results…" : "No step results recorded."}</p>}{results.map((item) => <button key={item.id} className={item.id === selected?.id ? "active" : ""} onClick={() => setSelectedId(item.id)}><small>{item.case_name}</small><strong>{item.step_name}</strong><span><AutomationBadge status={item.status} /> <small>{item.attempt > 1 ? `Retry ${item.attempt - 1}` : "Original attempt"}{item.is_final ? " · Final" : ""}</small></span></button>)}</aside><main>{selected ? <StepResult result={selected} /> : <div className="empty-state">Step details will appear here.</div>}</main></section>
+    </>}</AppLayout>;
+}
+export function StepResult({ result }: { result: AutomationStepResult }) {
+  return <div><div className="panel-header"><div><small className="muted">{result.case_name} · {STEP_LABELS[result.step_type]}</small><h2>{result.step_name}</h2></div><AutomationBadge status={result.status} /></div><p className="muted">Attempt {result.attempt}{result.is_final ? " — final result" : " — another attempt followed"}</p>{result.request_method && <p><strong>{result.request_method}</strong> <code className="automation-result-url">{result.resolved_url}</code></p>}<div className="button-row">{result.status_code !== null && <span>HTTP {result.status_code}</span>}{result.response_time_ms !== null && <span>{result.response_time_ms.toFixed(1)} ms</span>}</div>{result.error_message && <AutomationError message={`${result.error_kind ? `${result.error_kind}: ` : ""}${result.error_message}`} />}
+    <h3>Assertions</h3>{!result.assertions.length ? <p className="muted">No assertions for this step.</p> : <div className="automation-assertion-results">{result.assertions.map((assertion, index) => { const passed = assertion.passed ?? (assertion.result === true || assertion.result === "PASSED" || assertion.result === "PASS"); return <div className={passed ? "assertion-pass" : "assertion-fail"} key={index}><strong>{passed ? "Passed" : "Failed"}: {assertion.description || assertion.source || `Assertion ${index + 1}`}</strong><dl><dt>Expected</dt><dd>{display(assertion.expected)}</dd><dt>Actual</dt><dd>{display(assertion.actual)}</dd></dl>{(assertion.failure_message || assertion.message) && <p>{assertion.failure_message || assertion.message}</p>}</div>; })}</div>}
+    <h3>Extracted variables</h3>{Object.keys(result.extracted_variables).length ? <dl className="automation-extracted">{Object.entries(result.extracted_variables).map(([key, value]) => <div key={key}><dt><code>{key}</code></dt><dd><code>{display(value)}</code></dd></div>)}</dl> : <p className="muted">No variables extracted.</p>}<p className="muted">Secret values are masked in saved results.</p><p className="muted">Started {new Date(result.started_at).toLocaleString()}{result.completed_at && ` · Finished ${new Date(result.completed_at).toLocaleString()}`}</p>
+  </div>;
+}

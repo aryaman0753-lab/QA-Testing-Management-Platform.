@@ -90,6 +90,12 @@ class Bug(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     discovered_from_load_test_run_id: Mapped[uuid.UUID | None] = mapped_column(
         GUID(), ForeignKey("load_test_runs.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    discovered_from_automation_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        GUID(), ForeignKey("automation_runs.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    discovered_from_automation_step_result_id: Mapped[uuid.UUID | None] = mapped_column(
+        GUID(), ForeignKey("automation_step_results.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     project: Mapped["Project"] = relationship(back_populates="bugs")
     reporter: Mapped["User"] = relationship(foreign_keys=[reported_by])
@@ -99,6 +105,8 @@ class Bug(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     attachments: Mapped[List["BugAttachment"]] = relationship(back_populates="bug", cascade="all, delete-orphan")
     discovered_from_test_result: Mapped["ApiTestResult | None"] = relationship(foreign_keys=[discovered_from_test_result_id])
     discovered_from_load_test_run = relationship("LoadTestRun", foreign_keys=[discovered_from_load_test_run_id])
+    discovered_from_automation_run = relationship("AutomationRun", foreign_keys=[discovered_from_automation_run_id])
+    discovered_from_automation_step_result = relationship("AutomationStepResult", foreign_keys=[discovered_from_automation_step_result_id])
 
     @property
     def bug_key(self) -> str:

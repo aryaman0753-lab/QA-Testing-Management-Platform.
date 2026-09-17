@@ -19,6 +19,7 @@ from app.database.models.api_testing import (
 )
 from app.api_testing.secrets import encrypt
 from app.database.models.load_testing import LoadTargetType, LoadTest, LoadTestProfile
+from app.database.models.automation import AutomationTestSuite, AutomationTestCase, AutomationTestStep
 
 configure_logging()
 logger = get_logger(__name__)
@@ -170,6 +171,39 @@ def seed() -> None:
                 created_by=admin.id,
             ))
             logger.info("Seeded ECOM API baseline load test")
+
+        if environment and source_request and db.query(AutomationTestSuite).filter(
+            AutomationTestSuite.project_id == ecom.id,
+            AutomationTestSuite.name == "ECOM API Smoke Automation",
+        ).first() is None:
+            suite = AutomationTestSuite(
+                project_id=ecom.id, name="ECOM API Smoke Automation",
+                description="Draft example: configure the QA environment and allowed host before activating. No schedule is enabled.",
+                environment_id=environment.id, status="DRAFT", created_by=admin.id,
+                allowed_hosts=["api.example.test"], max_retries=0, auto_create_bugs=False,
+            )
+            db.add(suite)
+            db.flush()
+            case = AutomationTestCase(
+                project_id=ecom.id, suite_id=suite.id, name="List users smoke check",
+                order_index=0, enabled=True, timeout=60,
+            )
+            db.add(case)
+            db.flush()
+            db.add_all([
+                AutomationTestStep(
+                    case_id=case.id, name="Get users", step_type="HTTP_REQUEST",
+                    api_request_id=source_request.id, config={}, order_index=0, enabled=True,
+                ),
+                AutomationTestStep(
+                    case_id=case.id, name="Validate response", step_type="ASSERTION",
+                    config={"assertions": [
+                        {"source": "STATUS_CODE", "operator": "EQUALS", "expected": "200"},
+                        {"source": "RESPONSE_TIME", "operator": "LESS_THAN", "expected": "1000"},
+                    ]}, order_index=1, enabled=True,
+                ),
+            ])
+            logger.info("Seeded draft ECOM automation suite")
 
         db.commit()
         print("Seed complete. Development accounts (password for all: 'Password123!'):")

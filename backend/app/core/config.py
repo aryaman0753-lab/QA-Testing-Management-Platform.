@@ -8,7 +8,7 @@ inventing their own env-loading logic.
 from functools import lru_cache
 from typing import List
 
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql+psycopg://qahub:qahub@localhost:5432/qahub"
 
-    # Redis (not used for business logic yet, but wired for future modules)
+    # Redis worker queues
     REDIS_URL: str = "redis://localhost:6379/0"
 
     # JWT
@@ -70,6 +70,27 @@ class Settings(BaseSettings):
     LOAD_TEST_METRICS_INTERVAL_SECONDS: float = 2.0
     LOAD_TEST_STALE_RUN_SECONDS: int = 90
     LOAD_TEST_QUEUE_NAME: str = "qahub:load-tests"
+
+    # API automation and dedicated scheduler safety limits (Phase 5)
+    AUTOMATION_ALLOW_PRODUCTION: bool = False
+    AUTOMATION_ALLOW_PRIVATE_NETWORKS: bool = False
+    AUTOMATION_ALLOWED_HOSTS: str = ""
+    AUTOMATION_MAX_CONCURRENT_RUNS: int = Field(default=3, ge=1)
+    AUTOMATION_MAX_CONCURRENT_PER_PROJECT: int = Field(default=2, ge=1)
+    AUTOMATION_MAX_CONCURRENT_PER_USER: int = Field(default=1, ge=1)
+    AUTOMATION_MAX_STEPS: int = Field(default=200, ge=1)
+    AUTOMATION_MAX_CASES: int = Field(default=50, ge=1)
+    AUTOMATION_MAX_RUN_SECONDS: int = Field(default=900, ge=1)
+    AUTOMATION_MAX_DELAY_SECONDS: float = Field(default=30, ge=0)
+    AUTOMATION_MAX_RETRIES: int = Field(default=3, ge=0, le=10)
+    AUTOMATION_STALE_RUN_SECONDS: int = Field(default=120, ge=10)
+    AUTOMATION_QUEUE_TIMEOUT_SECONDS: int = Field(default=900, ge=10)
+    AUTOMATION_QUEUE_NAME: str = "qahub:automation"
+    AUTOMATION_SCHEDULER_INTERVAL_SECONDS: float = Field(default=5, gt=0)
+
+    @property
+    def automation_allowed_hosts_list(self) -> List[str]:
+        return [host.strip().lower() for host in self.AUTOMATION_ALLOWED_HOSTS.split(",") if host.strip()]
 
     @property
     def load_test_allowed_hosts_list(self) -> List[str]:

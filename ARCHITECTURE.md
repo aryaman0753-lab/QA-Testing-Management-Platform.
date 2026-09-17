@@ -194,6 +194,48 @@ answers remain denied unless the dedicated load-test private-network setting is
 explicitly enabled. Production classification additionally requires server
 enablement, an administrator, and per-run confirmation.
 
+## Automation and scheduling boundary (Phase 5)
+
+`app/automation/` owns project-scoped definitions, validated step configurations,
+run admission, cron calculation, history/statistics, and the engine contract.
+`AutomationEngine` separates orchestration from the concrete `ApiAutomationEngine`;
+future browser or mobile engines can implement the contract without moving work
+into API request handlers. Browser automation is not implemented in this phase.
+
+```text
+Suite builder -> FastAPI policy + encrypted run snapshot -> Redis run UUID
+                             ^                                |
+Cron scheduler --------------'                         automation-worker
+  next/last/error state                                  |
+                                           ordered cases and steps
+                                                        |
+                                   bounded Phase 3 HTTP + assertions
+                                                        |
+                          PostgreSQL attempts/counts -> UI and opt-in bugs
+```
+
+The dedicated scheduler validates due schedules and queues runs; the dedicated
+automation worker executes them. Both are independent of Locust and the existing
+load-worker. All processes share configuration and secret-encryption keys.
+Queue payloads contain run identifiers, never request bodies or credentials.
+Each run captures its definition so editing a referenced API request cannot
+silently change an already queued workflow. Destinations and authorization are
+rechecked before execution, including environment classification and server policy.
+
+Automation reuses Phase 3 request shapes, HTTP transport, environment secrets,
+JSON-path subset, and outbound protections. It adds per-suite/server allowlists,
+same-origin redirects, separate private-network policy, conditions, retries,
+deadlines, cancellation, result redaction, and scheduler coordination. Response
+bodies are held transiently for assertions/extraction, not stored in run results.
+
+Automation is deliberately sequential within each run. A failed step causes the
+remaining steps of that case to be skipped; subsequent cases can still run.
+Results distinguish each retry attempt from its final outcome. Only safe HTTP
+methods may retry automatically to avoid replaying destructive requests.
+Concurrency admission and no-overlap checks apply to manual and scheduled runs.
+
+See [docs/AUTOMATION.md](docs/AUTOMATION.md) for the API and operations reference.
+
 ### Token storage
 
 All token persistence goes through `frontend/src/api/tokenStorage.ts`

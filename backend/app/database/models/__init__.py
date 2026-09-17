@@ -18,6 +18,11 @@ from app.database.models.load_testing import (  # noqa: F401
     LoadTestError, LoadTestMetric, LoadTestProfile, LoadTestResultStatus,
     LoadTargetType, LoadTestRun, LoadTestStatus,
 )
+from app.database.models.automation import (  # noqa: F401
+    AutomationTestSuite, AutomationTestCase, AutomationTestStep, AutomationRun,
+    AutomationStepResult, AutomationSchedule, AutomationFailureLink, AutomationAuditLog,
+    SuiteStatus, AutomationRunStatus, AutomationStepType, AutomationResultStatus,
+)
 
 __all__ = [
     "Base",

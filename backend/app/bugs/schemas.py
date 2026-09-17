@@ -165,6 +165,23 @@ class LoadTestSourceSummary(BaseModel):
     threshold_results: list[dict]
 
 
+class AutomationSourceSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    suite_id: uuid.UUID
+    status: str
+
+
+class AutomationStepSourceSummary(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+    case_id: uuid.UUID | None
+    step_id: uuid.UUID | None
+    case_name: str
+    step_name: str
+    assertions: list[dict]
+
+
 class BugDetail(BugListItem):
     description: str
     steps_to_reproduce: list[str]
@@ -183,6 +200,10 @@ class BugDetail(BugListItem):
     discovered_from_test_result: ApiTestSourceSummary | None
     discovered_from_load_test_run_id: uuid.UUID | None
     discovered_from_load_test_run: LoadTestSourceSummary | None
+    discovered_from_automation_run_id: uuid.UUID | None
+    discovered_from_automation_step_result_id: uuid.UUID | None
+    discovered_from_automation_run: AutomationSourceSummary | None
+    discovered_from_automation_step_result: AutomationStepSourceSummary | None
 
 
 class PaginatedBugs(BaseModel):
