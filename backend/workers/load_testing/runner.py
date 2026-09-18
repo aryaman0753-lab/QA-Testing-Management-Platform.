@@ -64,6 +64,10 @@ class LoadTestRunner:
                 run.heartbeat_at = _now(); db.add(LoadTestMetric(run_id=run.id, **asdict(snapshot))); db.commit()
             result = engine.start(config, lambda: self.queue.should_stop(run.id), metric)
             self._finish(db, run, result)
+            if not result.cancelled:
+                from app.operations.service import emit_event
+                event = "load_test.failed" if run.result_status in {LoadTestResultStatus.FAIL, LoadTestResultStatus.ERROR, LoadTestResultStatus.THRESHOLD_EXCEEDED} else "load_test.completed"
+                emit_event(db, run.project_id, event, {"run_id": str(run.id), "load_test_id": str(run.load_test_id), "status": run.status.value, "result_status": run.result_status.value, "threshold_violations": [row for row in run.threshold_results if not row.get("passed")]}, event_id=f"load-finished-{run.id}", title="Load test needs attention" if event.endswith("failed") else "Load test completed", message=f"Load run {run.run_key} finished with result {run.result_status.value}.", link=f"/projects/{run.project_id}/load-testing/runs/{run.id}")
             logger.info("load_run_%s run_id=%s total_requests=%s", "cancelled" if result.cancelled else "completed", run.id, result.summary.total_requests)
         except Exception:
             db.rollback(); run = db.get(LoadTestRun, run_id)
@@ -71,6 +75,8 @@ class LoadTestRunner:
                 if run.status in {LoadTestStatus.QUEUED, LoadTestStatus.STARTING, LoadTestStatus.RUNNING, LoadTestStatus.STOPPING}:
                     transition_run(run, LoadTestStatus.FAILED)
                 run.result_status = LoadTestResultStatus.ERROR; run.completed_at = _now(); run.error_message = "The isolated load worker failed while executing this run."; db.commit()
+                from app.operations.service import emit_event
+                emit_event(db, run.project_id, "load_test.failed", {"run_id": str(run.id), "load_test_id": str(run.load_test_id), "status": "FAILED"}, event_id=f"load-finished-{run.id}", title="Load test failed", message=f"Load run {run.run_key} failed in the worker.", link=f"/projects/{run.project_id}/load-testing/runs/{run.id}")
             logger.error("load_run_failed run_id=%s", run_id)
         finally: db.close()
 

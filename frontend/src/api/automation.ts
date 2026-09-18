@@ -23,6 +23,7 @@ export const createAutomationSchedule = (projectId: string, payload: SchedulePay
 export const updateAutomationSchedule = (id: string, payload: Partial<SchedulePayload>) => apiClient.patch<AutomationSchedule>(`/automation/schedules/${id}`, payload);
 export const deleteAutomationSchedule = (id: string) => apiClient.delete(`/automation/schedules/${id}`);
 export const getAutomationStatistics = (projectId: string, filters: RunFilters = {}) => apiClient.get<AutomationStatistics>(`/projects/${projectId}/automation/statistics`, { params: Object.fromEntries(Object.entries(filters).filter(([, value]) => value)) });
+export const compareAutomationRuns = (projectId: string, runA: string, runB: string) => apiClient.get(`/projects/${projectId}/automation/compare`, { params: { run_a: runA, run_b: runB } });
 
 // Selectors must include suites beyond the first page.
 export async function allAutomationSuites(projectId: string) {

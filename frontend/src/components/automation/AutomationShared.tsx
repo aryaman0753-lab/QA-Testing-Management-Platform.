@@ -4,7 +4,7 @@ import { Button } from "../ui/Button";
 
 export function AutomationNav({ projectId }: { projectId: string }) {
   const base = `/projects/${projectId}/automation`;
-  return <nav className="automation-nav" aria-label="Automation"><NavLink end to={base}>Overview & suites</NavLink><NavLink to={`${base}/runs`}>Run history</NavLink><NavLink to={`${base}/schedules`}>Schedules</NavLink></nav>;
+  return <nav className="automation-nav" aria-label="Automation"><NavLink end to={base}>Overview & suites</NavLink><NavLink to={`${base}/runs`}>Run history</NavLink><NavLink to={`${base}/compare`}>Compare</NavLink><NavLink to={`${base}/schedules`}>Schedules</NavLink></nav>;
 }
 export function AutomationBadge({ status }: { status: string }) { return <span className={`automation-badge automation-${status.toLowerCase()}`}>{status.replaceAll("_", " ")}</span>; }
 export function AutomationPagination({ data, onChange }: { data: AutomationPage<unknown>; onChange: (page: number) => void }) {

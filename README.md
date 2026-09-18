@@ -1,9 +1,35 @@
-# QAHub - Phase 5
+# QAHub - Phase 6
 
 QAHub is a project-scoped QA platform with authentication, team membership, bug
 tracking, secure functional API testing, controlled load/performance testing,
-and reusable scheduled API automation. Phase 5 adds separate automation and
-scheduler workers while preserving the Phase 1-4 workflows.
+and reusable scheduled API automation. Phase 6 adds CI/CD execution, a `qahub`
+CLI, signed webhooks, notifications, reports/exports, monitoring, and production
+operations while preserving all prior workflows.
+
+## Phase 6 - CI/CD & Production Readiness
+
+- Project-scoped, hashed CI keys and a generic CI trigger/status API
+- Pipeline-friendly CLI with deterministic exit codes and GitHub/GitLab/Jenkins/Azure examples
+- Encrypted HMAC webhooks with SSRF protection, bounded retry history, and deduplication
+- In-app/SMTP notification preferences and a separate operations worker
+- Unified QA dashboards, JSON/CSV/PDF reports, comparisons, and flaky candidates
+- Liveness/readiness, Prometheus metrics, JSON request logs, worker heartbeats, and admin operations
+- Redis rate limits, request/security headers, hardened attachments, and explicit retention
+- Separate development, test, and production Compose configurations plus backup/recovery guidance
+
+Quick start:
+
+```sh
+docker compose up --build -d
+docker compose exec backend alembic upgrade head
+pip install -e backend --no-deps
+```
+
+Open the UI at `http://localhost:5173`, API docs at `http://localhost:8000/docs`,
+liveness at `/health/live`, readiness at `/health/ready`, and metrics at `/metrics`.
+Start with [deployment](docs/DEPLOYMENT.md), [CI/CD](docs/CI_CD.md),
+[CLI](docs/CLI.md), [webhooks](docs/WEBHOOKS.md), [security](docs/SECURITY.md),
+[reporting](docs/REPORTING.md), and the [production checklist](PRODUCTION_CHECKLIST.md).
 
 ## Phase 5 - Advanced Automation & Scheduled Testing
 

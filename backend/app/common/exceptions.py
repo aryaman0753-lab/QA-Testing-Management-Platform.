@@ -12,6 +12,7 @@ class AppError(Exception):
 
     status_code = 400
     detail = "An error occurred."
+    code = "app_error"
 
     def __init__(self, detail: str | None = None):
         self.detail = detail or self.detail
@@ -21,23 +22,28 @@ class AppError(Exception):
 class NotFoundError(AppError):
     status_code = 404
     detail = "Resource not found."
+    code = "not_found"
 
 
 class ConflictError(AppError):
     status_code = 409
     detail = "Resource already exists."
+    code = "conflict"
 
 
 class UnauthorizedError(AppError):
     status_code = 401
     detail = "Not authenticated."
+    code = "unauthorized"
 
 
 class ForbiddenError(AppError):
     status_code = 403
     detail = "You do not have permission to perform this action."
+    code = "forbidden"
 
 
 class ValidationAppError(AppError):
     status_code = 422
     detail = "Invalid input."
+    code = "validation_error"

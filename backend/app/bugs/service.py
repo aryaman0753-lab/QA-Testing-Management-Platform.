@@ -164,6 +164,8 @@ def create_bug(db: Session, project_id: uuid.UUID, payload: BugCreate, current_u
     if payload.assigned_to:
         _history(db, bug, current_user, "ASSIGNEE_CHANGED", "assigned_to", None, payload.assigned_to)
     db.commit()
+    from app.operations.service import emit_event
+    emit_event(db, project.id, "bug.created", {"bug_id": str(bug.id), "bug_key": bug.bug_key, "title": bug.title, "status": bug.status.value}, event_id=f"bug-created-{bug.id}", title=f"Bug {bug.bug_key} created", message=bug.title, link=f"/projects/{project.id}/bugs/{bug.id}")
     return get_bug(db, bug.id, current_user)
 
 
@@ -250,6 +252,7 @@ def list_bugs(
 def update_bug(db: Session, bug_id: uuid.UUID, payload: BugUpdate, current_user: User) -> Bug:
     bug = get_bug(db, bug_id, current_user)
     fields = payload.model_fields_set
+    changed_fields: list[str] = []
     if current_user.role == UserRole.DEVELOPER:
         if bug.assigned_to != current_user.id:
             raise ForbiddenError("Developers may only update bugs assigned to them.")
@@ -267,8 +270,12 @@ def update_bug(db: Session, bug_id: uuid.UUID, payload: BugUpdate, current_user:
         new = getattr(payload, field)
         if old != new:
             setattr(bug, field, new)
+            changed_fields.append(field)
             _history(db, bug, current_user, "FIELD_CHANGED", field, old, new)
     db.commit()
+    if changed_fields:
+        from app.operations.service import emit_event
+        emit_event(db, bug.project_id, "bug.updated", {"bug_id": str(bug.id), "bug_key": bug.bug_key, "status": bug.status.value, "changed_fields": sorted(changed_fields)}, event_id=f"bug-updated-{bug.id}-{int(_now().timestamp() * 1000000)}", title=f"Bug {bug.bug_key} updated", message=bug.title, link=f"/projects/{bug.project_id}/bugs/{bug.id}")
     return get_bug(db, bug.id, current_user)
 
 
@@ -288,6 +295,9 @@ def assign_bug(db: Session, bug_id: uuid.UUID, assignee_id: uuid.UUID | None, cu
             bug.status = BugStatus.NEW
             _history(db, bug, current_user, "STATUS_CHANGED", "status", BugStatus.ASSIGNED, BugStatus.NEW)
     db.commit()
+    if old != assignee_id:
+        from app.operations.service import emit_event
+        emit_event(db, bug.project_id, "bug.updated", {"bug_id": str(bug.id), "bug_key": bug.bug_key, "change": "assignee", "assigned_to": str(assignee_id) if assignee_id else None}, event_id=f"bug-assigned-{bug.id}-{int(_now().timestamp() * 1000000)}", title=f"Bug {bug.bug_key} assignment changed", message=bug.title, link=f"/projects/{bug.project_id}/bugs/{bug.id}")
     return get_bug(db, bug.id, current_user)
 
 
@@ -321,6 +331,8 @@ def change_status(db: Session, bug_id: uuid.UUID, new_status: BugStatus, current
         bug.closed_at = _now()
     _history(db, bug, current_user, "STATUS_CHANGED", "status", old_status, new_status)
     db.commit()
+    from app.operations.service import emit_event
+    emit_event(db, bug.project_id, "bug.updated", {"bug_id": str(bug.id), "bug_key": bug.bug_key, "change": "status", "old_status": old_status.value, "status": new_status.value}, event_id=f"bug-status-{bug.id}-{int(_now().timestamp() * 1000000)}", title=f"Bug {bug.bug_key} status changed", message=f"{old_status.value} → {new_status.value}: {bug.title}", link=f"/projects/{bug.project_id}/bugs/{bug.id}")
     return get_bug(db, bug.id, current_user)
 
 

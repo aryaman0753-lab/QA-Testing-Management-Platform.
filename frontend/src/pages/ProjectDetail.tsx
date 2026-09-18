@@ -91,6 +91,7 @@ export function ProjectDetail() {
         </div>
         {isOwnerOrAdmin && (
           <div className="button-row">
+            <Link className="btn btn-primary link-button" to={`/projects/${project.id}/qa-dashboard`}>QA Dashboard</Link>
             <Link className="btn btn-primary link-button" to={`/projects/${project.id}/bugs`}>View Bugs</Link>
             <Link className="btn btn-secondary link-button" to={`/projects/${project.id}/api-testing`}>API Testing</Link>
             <Link className="btn btn-secondary link-button" to={`/projects/${project.id}/load-testing`}>Load Testing</Link>
@@ -109,6 +110,7 @@ export function ProjectDetail() {
 
       {!isOwnerOrAdmin && (
         <div className="button-row project-bug-link">
+          <Link className="btn btn-primary link-button" to={`/projects/${project.id}/qa-dashboard`}>QA Dashboard</Link>
           <Link className="btn btn-primary link-button" to={`/projects/${project.id}/bugs`}>View Bugs</Link>
           <Link className="btn btn-secondary link-button" to={`/projects/${project.id}/api-testing`}>API Testing</Link>
           <Link className="btn btn-secondary link-button" to={`/projects/${project.id}/load-testing`}>Load Testing</Link>

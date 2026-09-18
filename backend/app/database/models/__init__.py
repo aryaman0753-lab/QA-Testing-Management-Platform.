@@ -23,6 +23,10 @@ from app.database.models.automation import (  # noqa: F401
     AutomationStepResult, AutomationSchedule, AutomationFailureLink, AutomationAuditLog,
     SuiteStatus, AutomationRunStatus, AutomationStepType, AutomationResultStatus,
 )
+from app.database.models.operations import (  # noqa: F401
+    CiTestExecution, Notification, NotificationPreference, ProjectApiKey,
+    Webhook, WebhookDelivery, WorkerHeartbeat,
+)
 
 __all__ = [
     "Base",
@@ -39,4 +43,6 @@ __all__ = [
     "EnvironmentClassification", "LoadTest", "LoadTestAuditLog", "LoadTestEndpointMetric",
     "LoadTestError", "LoadTestMetric", "LoadTestProfile", "LoadTestResultStatus",
     "LoadTargetType", "LoadTestRun", "LoadTestStatus",
+    "CiTestExecution", "Notification", "NotificationPreference", "ProjectApiKey",
+    "Webhook", "WebhookDelivery", "WorkerHeartbeat",
 ]

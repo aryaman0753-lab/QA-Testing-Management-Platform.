@@ -14,6 +14,17 @@ x-automation-environment: &automation-environment
   AUTOMATION_QUEUE_TIMEOUT_SECONDS: ${AUTOMATION_QUEUE_TIMEOUT_SECONDS:-900}
   AUTOMATION_QUEUE_NAME: ${AUTOMATION_QUEUE_NAME:-qahub:automation}
   AUTOMATION_SCHEDULER_INTERVAL_SECONDS: ${AUTOMATION_SCHEDULER_INTERVAL_SECONDS:-5}
+  PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:5173}
+  WEBHOOK_TIMEOUT_SECONDS: ${WEBHOOK_TIMEOUT_SECONDS:-10}
+  WEBHOOK_MAX_ATTEMPTS: ${WEBHOOK_MAX_ATTEMPTS:-5}
+  WEBHOOK_DELIVERY_RETENTION_DAYS: ${WEBHOOK_DELIVERY_RETENTION_DAYS-}
+  AUTOMATION_RESULT_RETENTION_DAYS: ${AUTOMATION_RESULT_RETENTION_DAYS-}
+  LOAD_TEST_RESULT_RETENTION_DAYS: ${LOAD_TEST_RESULT_RETENTION_DAYS-}
+  SMTP_HOST: ${SMTP_HOST:-}
+  SMTP_PORT: ${SMTP_PORT:-587}
+  SMTP_USERNAME: ${SMTP_USERNAME:-}
+  SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+  SMTP_FROM: ${SMTP_FROM:-}
 
 services:
   db:
@@ -84,7 +95,6 @@ services:
       LOAD_TEST_PRODUCTION_MAX_TARGET_RPS: ${LOAD_TEST_PRODUCTION_MAX_TARGET_RPS:-20}
       LOAD_TEST_REQUIRE_ALLOWLIST: ${LOAD_TEST_REQUIRE_ALLOWLIST:-true}
       LOAD_TEST_ALLOWED_HOSTS: ${LOAD_TEST_ALLOWED_HOSTS:-}
-      LOAD_TEST_RESULT_RETENTION_DAYS: ${LOAD_TEST_RESULT_RETENTION_DAYS:-30}
       LOAD_TEST_METRICS_INTERVAL_SECONDS: ${LOAD_TEST_METRICS_INTERVAL_SECONDS:-2}
       LOAD_TEST_STALE_RUN_SECONDS: ${LOAD_TEST_STALE_RUN_SECONDS:-90}
       LOAD_TEST_QUEUE_NAME: ${LOAD_TEST_QUEUE_NAME:-qahub:load-tests}
@@ -181,6 +191,28 @@ services:
       backend:
         condition: service_healthy
       redis:
+        condition: service_healthy
+    cpus: "0.5"
+    mem_limit: 256m
+
+  operations-worker:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    command: ["python", "-m", "workers.operations.worker"]
+    environment:
+      <<: *automation-runtime
+      PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-http://localhost:5173}
+      WEBHOOK_TIMEOUT_SECONDS: ${WEBHOOK_TIMEOUT_SECONDS:-10}
+      WEBHOOK_MAX_ATTEMPTS: ${WEBHOOK_MAX_ATTEMPTS:-5}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      SMTP_USE_TLS: ${SMTP_USE_TLS:-true}
+    depends_on:
+      backend:
         condition: service_healthy
     cpus: "0.5"
     mem_limit: 256m

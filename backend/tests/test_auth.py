@@ -18,7 +18,8 @@ def test_duplicate_email_rejected(client: TestClient):
         json={"full_name": "Dup User", "email": "dup@example.com", "password": "Password123"},
     )
     assert response.status_code == 409
-    assert response.json()["detail"]
+    assert response.json()["error"]["code"] == "conflict"
+    assert response.json()["error"]["request_id"]
 
 
 def test_email_is_normalized(client: TestClient):

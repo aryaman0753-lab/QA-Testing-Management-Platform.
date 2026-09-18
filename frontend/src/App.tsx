@@ -27,6 +27,12 @@ import { AutomationSuiteBuilder } from "./pages/AutomationSuiteBuilder";
 import { AutomationRuns } from "./pages/AutomationRuns";
 import { AutomationRunDetails } from "./pages/AutomationRunDetails";
 import { AutomationSchedules } from "./pages/AutomationSchedules";
+import { AutomationCompare } from "./pages/AutomationCompare";
+import { AdminSystem } from "./pages/AdminSystem";
+import { Integrations } from "./pages/Integrations";
+import { Notifications } from "./pages/Notifications";
+import { ProjectQADashboard } from "./pages/ProjectQADashboard";
+import { Reports } from "./pages/Reports";
 
 function RedirectIfAuthenticated({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
@@ -101,6 +107,12 @@ export default function App() {
           <Route path="/projects/:projectId/automation/runs" element={<ProtectedRoute><AutomationRuns /></ProtectedRoute>} />
           <Route path="/projects/:projectId/automation/runs/:runId" element={<ProtectedRoute><AutomationRunDetails /></ProtectedRoute>} />
           <Route path="/projects/:projectId/automation/schedules" element={<ProtectedRoute><AutomationSchedules /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/automation/compare" element={<ProtectedRoute><AutomationCompare /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/qa-dashboard" element={<ProtectedRoute><ProjectQADashboard /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
+          <Route path="/projects/:projectId/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
+          <Route path="/admin/system" element={<ProtectedRoute><AdminSystem /></ProtectedRoute>} />
           <Route
             path="/projects/:id"
             element={

@@ -13,6 +13,8 @@ from app.core.config import get_settings
 from app.database.database import SessionLocal
 from app.database.models.automation import AutomationRun, AutomationSchedule, AutomationTestSuite
 from app.database.models.user import User
+from workers.heartbeat import Heartbeat
+from app.core.logging import configure_logging
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +73,8 @@ def scheduler_tick(session_factory=SessionLocal, enqueue=None, now=None):
                     run.status, run.completed_at, run.error_message = "FAILED", now, "The automation queue is unavailable."
                     schedule.last_error = "The automation queue is unavailable."
                     db.commit()
+                    from app.operations.service import emit_event
+                    emit_event(db, run.project_id, "automation.run.failed", {"run_id": str(run.id), "suite_id": str(run.suite_id), "schedule_id": str(schedule.id), "status": "FAILED"}, event_id=f"automation-finished-{run.id}", title="Scheduled automation failed", message="The automation queue was unavailable.", link=f"/projects/{run.project_id}/automation/runs/{run.id}")
             except Exception:
                 db.rollback()
                 schedule = db.get(AutomationSchedule, schedule_id)
@@ -81,19 +85,29 @@ def scheduler_tick(session_factory=SessionLocal, enqueue=None, now=None):
                     except Exception:
                         schedule.enabled, schedule.next_run_at = False, None
                     db.commit()
+                    try:
+                        from app.operations.service import emit_event
+                        emit_event(db, schedule.project_id, "automation.run.failed", {"schedule_id": str(schedule.id), "suite_id": str(schedule.suite_id), "status": "FAILED"}, event_id=f"schedule-failed-{schedule.id}-{int(now.timestamp())}", title="Scheduled automation failed", message=schedule.last_error or "Scheduled execution failed.", link=f"/projects/{schedule.project_id}/automation/schedules")
+                    except Exception:
+                        db.rollback()
                 logger.warning("Automation schedule %s could not be queued", schedule_id)
     return scheduled
 
 
 def main():
-    logging.basicConfig(level=logging.INFO)
+    configure_logging()
     logger.info("Automation scheduler started")
+    heartbeat = Heartbeat("SCHEDULER").start()
     while True:
         try:
-            scheduler_tick()
+            heartbeat.working("scheduler-tick")
+            scheduled = scheduler_tick()
+            heartbeat.finished(completed=len(scheduled))
         except KeyboardInterrupt:
+            heartbeat.stop()
             return
         except Exception:
+            heartbeat.finished(failed=True)
             logger.warning("Automation scheduler database is temporarily unavailable")
         time.sleep(get_settings().AUTOMATION_SCHEDULER_INTERVAL_SECONDS)
 

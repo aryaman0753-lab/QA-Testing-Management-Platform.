@@ -66,7 +66,7 @@ class Settings(BaseSettings):
     LOAD_TEST_PRODUCTION_MAX_TARGET_RPS: float = 20.0
     LOAD_TEST_REQUIRE_ALLOWLIST: bool = True
     LOAD_TEST_ALLOWED_HOSTS: str = ""
-    LOAD_TEST_RESULT_RETENTION_DAYS: int = 30
+    LOAD_TEST_RESULT_RETENTION_DAYS: int | None = Field(default=None, ge=1)
     LOAD_TEST_METRICS_INTERVAL_SECONDS: float = 2.0
     LOAD_TEST_STALE_RUN_SECONDS: int = 90
     LOAD_TEST_QUEUE_NAME: str = "qahub:load-tests"
@@ -88,6 +88,28 @@ class Settings(BaseSettings):
     AUTOMATION_QUEUE_NAME: str = "qahub:automation"
     AUTOMATION_SCHEDULER_INTERVAL_SECONDS: float = Field(default=5, gt=0)
 
+    # CI/CD, delivery, monitoring and retention (Phase 6)
+    PUBLIC_BASE_URL: str = "http://localhost:5173"
+    CI_API_KEYS_PER_PROJECT: int = Field(default=10, ge=1, le=100)
+    WEBHOOK_TIMEOUT_SECONDS: float = Field(default=10, gt=0, le=60)
+    WEBHOOK_MAX_ATTEMPTS: int = Field(default=5, ge=1, le=20)
+    WEBHOOK_QUEUE_NAME: str = "qahub:webhooks"
+    WEBHOOK_DELIVERY_RETENTION_DAYS: int | None = Field(default=None, ge=1)
+    AUTOMATION_RESULT_RETENTION_DAYS: int | None = Field(default=None, ge=1)
+    WORKER_HEARTBEAT_INTERVAL_SECONDS: float = Field(default=10, gt=0)
+    WORKER_UNAVAILABLE_SECONDS: int = Field(default=45, ge=10)
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int = Field(default=587, ge=1, le=65535)
+    SMTP_USERNAME: str | None = None
+    SMTP_PASSWORD: str | None = None
+    SMTP_FROM: str | None = None
+    SMTP_USE_TLS: bool = True
+    RATE_LIMIT_LOGIN_PER_MINUTE: int = Field(default=10, ge=1)
+    RATE_LIMIT_CI_PER_MINUTE: int = Field(default=30, ge=1)
+    RATE_LIMIT_EXECUTION_PER_MINUTE: int = Field(default=20, ge=1)
+    RATE_LIMIT_WEBHOOK_CONFIG_PER_MINUTE: int = Field(default=20, ge=1)
+    MAX_REQUEST_SIZE_MB: int = Field(default=10, ge=1, le=100)
+
     @property
     def automation_allowed_hosts_list(self) -> List[str]:
         return [host.strip().lower() for host in self.AUTOMATION_ALLOWED_HOSTS.split(",") if host.strip()]
@@ -104,6 +126,11 @@ class Settings(BaseSettings):
         if isinstance(value, str) and value.lower() not in {"1", "0", "true", "false", "yes", "no", "on", "off"}:
             return False
         return value
+
+    @field_validator("LOAD_TEST_RESULT_RETENTION_DAYS", "AUTOMATION_RESULT_RETENTION_DAYS", "WEBHOOK_DELIVERY_RETENTION_DAYS", mode="before")
+    @classmethod
+    def empty_retention_is_disabled(cls, value: object) -> object:
+        return None if value == "" else value
 
     @property
     def cors_origins_list(self) -> List[str]:

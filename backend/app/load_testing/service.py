@@ -220,7 +220,10 @@ def recover_stale_runs(db: Session) -> int:
 
 def cleanup_expired_runs(db: Session) -> int:
     """Delete non-baseline terminal results after the configured retention period."""
-    cutoff = _now() - timedelta(days=get_settings().LOAD_TEST_RESULT_RETENTION_DAYS)
+    retention_days = get_settings().LOAD_TEST_RESULT_RETENTION_DAYS
+    if retention_days is None:
+        return 0
+    cutoff = _now() - timedelta(days=retention_days)
     rows = list(db.scalars(select(LoadTestRun).where(
         LoadTestRun.status.in_({LoadTestStatus.COMPLETED, LoadTestStatus.FAILED, LoadTestStatus.CANCELLED}),
         LoadTestRun.is_baseline.is_(False), LoadTestRun.completed_at < cutoff,

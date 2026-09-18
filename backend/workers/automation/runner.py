@@ -65,6 +65,8 @@ async def execute_run(run_id, session_factory=SessionLocal, engine=None):
         if not claimed.rowcount:
             return
         run = db.get(AutomationRun, run_id)
+        from app.operations.service import emit_event
+        emit_event(db, run.project_id, "automation.run.started", {"run_id": str(run.id), "suite_id": str(run.suite_id), "trigger_type": run.trigger_type}, event_id=f"automation-started-{run.id}")
         if run.stop_requested:
             run.status, run.completed_at = "CANCELLED", _now()
             db.commit()
@@ -106,10 +108,16 @@ async def execute_run(run_id, session_factory=SessionLocal, engine=None):
         db.execute(update(AutomationRun).where(AutomationRun.id == run_id, AutomationRun.status == "RUNNING").values(**values))
         db.add(AutomationAuditLog(project_id=run.project_id, user_id=user.id, action="AUTOMATION_COMPLETED", resource_type="run", resource_id=run_id))
         db.commit()
+        event = "automation.run.failed" if outcome.status == "FAILED" else "automation.run.completed"
+        emit_event(db, run.project_id, event, {"run_id": str(run.id), "suite_id": str(run.suite_id), "status": outcome.status, "failed_cases": outcome.failed_cases}, event_id=f"automation-finished-{run.id}", title="Automation run failed" if outcome.status == "FAILED" else "Automation run completed", message=f"Automation run {run.id} finished with status {outcome.status}.", link=f"/projects/{run.project_id}/automation/runs/{run.id}")
     except Exception:
         db.rollback()
         db.execute(update(AutomationRun).where(AutomationRun.id == run_id, AutomationRun.status.in_(["QUEUED", "RUNNING"])).values(status="FAILED", completed_at=_now(), error_message="The automation worker could not execute this run. Check suite configuration, permissions, and worker availability."))
         db.commit()
+        failed_run = db.get(AutomationRun, run_id)
+        if failed_run:
+            from app.operations.service import emit_event
+            emit_event(db, failed_run.project_id, "automation.run.failed", {"run_id": str(run_id), "status": "FAILED"}, event_id=f"automation-finished-{run_id}", title="Automation run failed", message=f"Automation run {run_id} could not be executed.", link=f"/projects/{failed_run.project_id}/automation/runs/{run_id}")
         logger.warning("Automation execution failed for run %s", run_id)
     finally:
         db.close()

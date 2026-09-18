@@ -14,6 +14,7 @@ export function Topbar() {
     <header className="topbar">
       <div />
       <div className="topbar-user">
+        <button className="btn btn-ghost" onClick={() => navigate("/notifications")} aria-label="Open notifications">Notifications</button>
         <button className="topbar-profile" onClick={() => navigate("/profile")}>
           <span className="avatar">{user?.full_name?.charAt(0).toUpperCase() ?? "?"}</span>
           <span>{user?.full_name}</span>

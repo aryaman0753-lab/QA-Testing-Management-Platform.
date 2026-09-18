@@ -1,5 +1,23 @@
 # QAHub Architecture
 
+## Phase 6 operational plane
+
+The API remains stateless for request handling. PostgreSQL stores authoritative CI execution metadata, project API-key hashes, encrypted webhook configuration, durable delivery attempts, notification preferences/inbox records, and worker heartbeats. Redis supplies execution queues and distributed rate counters. Automation, scheduler, load, and operations workers publish heartbeats; the operations worker performs outbound HMAC webhook and SMTP delivery plus explicitly configured retention cleanup.
+
+CI requests authenticate with project-scoped keys and reuse the existing automation snapshot, concurrency, and policy engine. Events are committed to delivery/notification records before outbound work. Project reports read existing immutable histories; export sanitization excludes raw credentials and secrets.
+
+```text
+CI / CLI -> FastAPI -> PostgreSQL state -> Redis automation queue -> Automation worker
+                         |                         |
+                         +-> webhook delivery ----+-> Operations worker -> HTTPS/SMTP
+                         +-> reports/dashboards
+
+Admin UI -> /admin/system -> DB + Redis + heartbeat/queue summaries
+Prometheus -> /metrics     -> bounded process metrics
+```
+
+Security boundaries remain centralized: bearer/API-key authentication, project membership and owner/admin management checks, SSRF validation at configuration and connection time, encrypted secrets, safe attachment storage, request-size/rate limits, and one consistent non-tracing error envelope.
+
 This document explains how bug tracking and secure functional API testing are
 added without duplicating auth, users, projects, or database/session plumbing,
 and how load testing is isolated from the interactive application process.
